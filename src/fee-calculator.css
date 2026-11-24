@@ -1,0 +1,19 @@
+/* Optional starter styles. On Webflow (Option B) style everything in the
+   Designer instead and skip this file. Used by the embed and the demo page. */
+.feecalc { font-family: Inter, Arial, sans-serif; color: #1e1e1e; font-feature-settings: 'tnum'; }
+.feecalc__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; align-items: start; }
+.feecalc__inputs { display: flex; flex-direction: column; gap: 18px; }
+.feecalc label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: #333; }
+.feecalc input { font: inherit; font-size: 18px; padding: 14px; border: 1px solid #9a9a9a; background: #fff; color: #1e1e1e; }
+.feecalc fieldset { border: 0; margin: 0; padding: 0; }
+.feecalc legend { font-size: 14px; color: #333; padding: 0; margin-bottom: 8px; }
+.feecalc__benchmarks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.feecalc__benchmarks button { text-align: left; min-height: 56px; padding: 12px 14px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: #fff; color: #1e1e1e; border: 1px solid #9a9a9a; }
+.feecalc__benchmarks button.is-selected { background: #0c1a2a; color: #fff; border-color: #0c1a2a; }
+.feecalc__note { font-size: 12px; line-height: 1.5; color: #5e5e5e; }
+.feecalc__results { border: 1px solid #dcdcdc; padding: 28px; display: flex; flex-direction: column; }
+.feecalc__row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e5e5e5; font-size: 16px; }
+.feecalc__row strong { font-weight: 600; }
+.feecalc__total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 16px 0 4px; font-size: 18px; font-weight: 600; }
+.feecalc__total span:last-child { font-family: 'EB Garamond', Garamond, serif; font-weight: 400; font-size: 34px; color: #b5473a; }
+.feecalc__small { font-size: 13px; color: #5e5e5e; line-height: 1.6; margin: 8px 0 0; }

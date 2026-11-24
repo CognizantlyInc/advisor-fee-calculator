@@ -1,0 +1,41 @@
+<!--
+  Advisor Fee Calculator: markup.
+  Option A (quick test): paste this into a Webflow Code Embed, then add the two
+  <link>/<script> lines from README.md to the page's custom code.
+  Option B (launch): rebuild this structure with Webflow elements and copy the
+  data-calc attributes onto them (Element settings > Custom attributes).
+-->
+<div class="feecalc" data-calc-root data-calc-default="sp">
+  <div class="feecalc__grid">
+    <form class="feecalc__inputs" onsubmit="return false">
+      <label>Account value ($)
+        <input type="number" inputmode="decimal" min="0" step="1000" value="1000000" data-calc="balance">
+      </label>
+      <label>All-in cost (% a year, including fees inside your funds)
+        <input type="number" inputmode="decimal" min="0" max="20" step="0.05" value="2" data-calc="fee">
+      </label>
+      <label>Years ahead
+        <input type="number" inputmode="numeric" min="1" max="50" step="1" value="20" data-calc="years">
+      </label>
+      <fieldset>
+        <legend>Benchmark to compare against</legend>
+        <div class="feecalc__benchmarks">
+          <button type="button" data-calc-benchmark="sp">S&amp;P 500</button>
+          <button type="button" data-calc-benchmark="qqq">NASDAQ-100 (QQQ)</button>
+          <button type="button" data-calc-benchmark="bal">60/40 portfolio</button>
+          <button type="button" data-calc-benchmark="cash">Cash</button>
+        </div>
+        <p class="feecalc__note" data-calc-out="benchmark-note"></p>
+      </fieldset>
+    </form>
+
+    <div class="feecalc__results" aria-live="polite">
+      <div class="feecalc__row"><span>Fees this year</span><strong data-calc-out="fee-this-year">–</strong></div>
+      <div class="feecalc__row"><span>Value at your cost</span><strong data-calc-out="value-at-fee">–</strong></div>
+      <div class="feecalc__row"><span>Value in <span data-calc-out="benchmark-label"></span> at <span data-calc-out="benchmark-fee"></span></span><strong data-calc-out="value-at-low-cost">–</strong></div>
+      <div class="feecalc__total"><span>Cost of your fees</span><span data-calc-out="gap">–</span></div>
+      <p class="feecalc__small" style="text-align:right;margin:0"><span data-calc-out="gap-today">–</span> in today's dollars</p>
+      <p class="feecalc__small">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span>, the same return on your portfolio before its fees, no further deposits, and 2% inflation. Return assumptions are illustrative long-run estimates. This shows cost only. For education; not investment advice.</p>
+    </div>
+  </div>
+</div>
