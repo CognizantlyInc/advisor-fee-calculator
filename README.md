@@ -62,7 +62,7 @@ jsDelivr, a free file service, can only serve files from a **public** repo.
 Page settings → Custom code → **Before `</body>` tag**:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/AmosNadler/advisor-fee-calculator@v0.1.0/src/fee-calculator.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/CognizantlyInc/advisor-fee-calculator@v0.1.0/src/fee-calculator.js"></script>
 ```
 
 Use a version tag (`@v0.1.0`) rather than `@main`, so the live site only
@@ -74,7 +74,7 @@ changes when you publish a new version on purpose (see Releasing a change).
 2. Paste in `embed/calculator-markup.html`.
 3. Also add this line to the page's custom code, **inside `<head>`**:
    ```html
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/AmosNadler/advisor-fee-calculator@v0.1.0/src/fee-calculator.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/CognizantlyInc/advisor-fee-calculator@v0.1.0/src/fee-calculator.css">
    ```
 
 ### Step 3, Option B: build it with Webflow elements (recommended)
