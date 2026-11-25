@@ -4,7 +4,7 @@
   "description": "Prof of Wall Street fee calculator for Webflow: what all-in fees cost over time against a low-cost benchmark.",
   "main": "src/fee-calculator.js",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js test/*.test.mjs"
   },
   "license": "UNLICENSED",
   "private": true

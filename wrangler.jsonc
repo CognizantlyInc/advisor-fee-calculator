@@ -1,8 +1,14 @@
-// Cloudflare Workers config: serves this repo as a static site.
+// Cloudflare Workers config.
+// Static files are served directly. Requests under /private go through
+// src/worker.mjs first, which checks the access code (secret:
+// PRIVATE_ACCESS_CODE, set in the Cloudflare dashboard, never in this repo).
 {
   "name": "advisor-fee-calculator",
+  "main": "src/worker.mjs",
   "compatibility_date": "2025-11-01",
   "assets": {
-    "directory": "./"
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": ["/private", "/private/*"]
   }
 }
