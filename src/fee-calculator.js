@@ -1,29 +1,44 @@
 /*!
  * Advisor Fee Calculator · Prof of Wall Street
  * Shows what an investor's all-in fees cost over time, against a low-cost
- * option in a chosen benchmark. Runs entirely in the visitor's browser:
- * nothing typed is sent anywhere.
+ * option in a chosen benchmark. US and Canada versions. Runs entirely in the
+ * visitor's browser: nothing typed is sent anywhere.
  *
- * Works on any page (built for Webflow). Elements are found by data attributes;
- * see README.md for the full list.
+ * Elements are found by data attributes; see README.md for the full list.
  */
 (function (global) {
   'use strict';
 
   // ---------------------------------------------------------------------------
-  // 1. Assumptions. Illustrative long-run estimates, not forecasts.
-  //    On Webflow these can be overridden from a CMS Collection by putting
-  //    data-return / data-fee / data-label / data-note on each benchmark button.
+  // 1. Assumptions by country. Illustrative long-run estimates, not forecasts.
+  //    Low-cost fees reflect typical index ETFs in each market (see README).
+  //    Can be overridden per button with data-return / data-fee (in percent).
   // ---------------------------------------------------------------------------
   var DEFAULTS = {
     inflation: 0.02,
-    benchmarks: {
-      sp:   { name: 'S&P 500',         label: 'an S&P 500 ETF',              ret: 0.07,  fee: 0.0009, note: 'For all-equity mandates focused on large U.S. companies.' },
-      qqq:  { name: 'NASDAQ-100',      label: 'a NASDAQ-100 ETF (QQQ)',      ret: 0.08,  fee: 0.0020, note: 'For growth mandates concentrated in U.S. technology. Higher expected return, with larger swings.' },
-      bal:  { name: '60/40 portfolio', label: 'a 60/40 balanced ETF',        ret: 0.055, fee: 0.0022, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
-      cash: { name: 'Cash',            label: 'a high-interest savings ETF', ret: 0.03,  fee: 0.0011, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
-    },
-    defaultBenchmark: 'sp'
+    defaultCountry: 'us',
+    countries: {
+      us: {
+        currency: 'US$',
+        defaultBenchmark: 'sp',
+        benchmarks: {
+          sp:   { name: 'S&P 500',         label: 'an S&P 500 index ETF',     ret: 0.07,  fee: 0.0003, note: 'For all-equity mandates focused on large U.S. companies.' },
+          qqq:  { name: 'NASDAQ-100',      label: 'a NASDAQ-100 ETF (QQQ)',   ret: 0.08,  fee: 0.0020, note: 'For growth mandates concentrated in U.S. technology. Higher expected return, with larger swings.' },
+          bal:  { name: '60/40 portfolio', label: 'a 60/40 balanced index fund', ret: 0.055, fee: 0.0010, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
+          cash: { name: 'Cash',            label: 'a money market fund',      ret: 0.03,  fee: 0.0010, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
+        }
+      },
+      ca: {
+        currency: 'C$',
+        defaultBenchmark: 'tsx',
+        benchmarks: {
+          tsx:  { name: 'S&P/TSX Composite', label: 'a TSX index ETF',              ret: 0.065, fee: 0.0006, note: 'For Canadian equity mandates.' },
+          sp:   { name: 'S&P 500',           label: 'an S&P 500 index ETF in CAD',  ret: 0.07,  fee: 0.0009, note: 'For all-equity mandates focused on large U.S. companies, held in Canadian dollars.' },
+          bal:  { name: '60/40 portfolio',   label: 'a 60/40 balanced ETF',          ret: 0.055, fee: 0.0024, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
+          cash: { name: 'Cash',              label: 'a high-interest savings ETF',   ret: 0.03,  fee: 0.0011, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
+        }
+      }
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -37,7 +52,7 @@
     var years = Math.round(clamp(num(input.years), 1, 50));
     var ret = num(input.benchmark.ret);
     var lowFee = num(input.benchmark.fee);
-    var inflation = input.inflation == null ? DEFAULTS.inflation : num(input.inflation);
+    var inflation = input.inflation == null || input.inflation === '' ? DEFAULTS.inflation : num(input.inflation);
 
     var valueAtFee = balance * Math.pow((1 + ret) * (1 - fee), years);
     var valueAtLowCost = balance * Math.pow((1 + ret) * (1 - lowFee), years);
@@ -57,7 +72,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 3. Formatting
+  // 3. Helpers
   // ---------------------------------------------------------------------------
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
   function pct(x) {
@@ -67,103 +82,13 @@
   function num(x) { var n = parseFloat(String(x == null ? '' : x).replace(/[$,\s%]/g, '')); return isFinite(n) ? n : 0; }
   function clamp(x, lo, hi) { return Math.min(hi, Math.max(lo, x)); }
 
-  // ---------------------------------------------------------------------------
-  // 4. Page wiring
-  // ---------------------------------------------------------------------------
-  function readBenchmark(btn) {
-    var id = btn.getAttribute('data-calc-benchmark');
-    var base = DEFAULTS.benchmarks[id] || {};
-    function attr(name, fallback, isNum) {
-      var v = btn.getAttribute(name);
-      if (v == null || v === '') return fallback;
-      return isNum ? num(v) / 100 : v;  // entered as percent: "7" = 7%, "0.09" = 0.09%
-    }
-    return {
-      id: id,
-      name: attr('data-name', base.name || id),
-      label: attr('data-label', base.label || id),
-      ret: attr('data-return', base.ret, true),
-      fee: attr('data-fee', base.fee, true),
-      note: attr('data-note', base.note || '')
-    };
+  function countryConfig(code) {
+    return DEFAULTS.countries[code] || DEFAULTS.countries[DEFAULTS.defaultCountry];
   }
-
-  function init(root) {
-    if (!root || root.__feeCalc) return;
-    root.__feeCalc = true;
-
-    var q = function (sel) { return root.querySelector(sel); };
-    var inputs = {
-      balance: q('[data-calc="balance"]'),
-      fee: q('[data-calc="fee"]'),
-      years: q('[data-calc="years"]')
-    };
-    var buttons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-benchmark]'));
-    var selected = root.getAttribute('data-calc-default') || DEFAULTS.defaultBenchmark;
-
-    // Webflow puts inputs inside a Form block. Stop Enter from submitting it.
-    var form = root.closest ? root.closest('form') : null;
-    if (!form && inputs.balance && inputs.balance.form) form = inputs.balance.form;
-    if (form) form.addEventListener('submit', function (e) { e.preventDefault(); });
-
-    function currentBenchmark() {
-      var btn = buttons.filter(function (b) { return b.getAttribute('data-calc-benchmark') === selected; })[0];
-      if (btn) return readBenchmark(btn);
-      var d = DEFAULTS.benchmarks[selected] || DEFAULTS.benchmarks[DEFAULTS.defaultBenchmark];
-      return { id: selected, name: d.name, label: d.label, ret: d.ret, fee: d.fee, note: d.note };
-    }
-
-    function set(name, text) {
-      var nodes = root.querySelectorAll('[data-calc-out="' + name + '"]');
-      for (var i = 0; i < nodes.length; i++) nodes[i].textContent = text;
-    }
-
-    function update() {
-      var bm = currentBenchmark();
-      var r = calculate({
-        balance: inputs.balance ? inputs.balance.value : 0,
-        feePct: inputs.fee ? inputs.fee.value : 0,
-        years: inputs.years ? inputs.years.value : 20,
-        benchmark: bm,
-        inflation: root.getAttribute('data-calc-inflation')
-      });
-      buttons.forEach(function (b) {
-        var on = b.getAttribute('data-calc-benchmark') === selected;
-        b.classList.toggle('is-selected', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
-      set('fee-this-year', money(r.feeThisYear));
-      set('value-at-fee', money(r.valueAtFee));
-      set('value-at-low-cost', money(r.valueAtLowCost));
-      set('fees-paid', money(r.feesPaid));
-      set('gap', money(r.gap));
-      set('gap-today', money(r.gapTodayDollars));
-      set('years', String(r.years));
-      set('benchmark-name', bm.name);
-      set('benchmark-label', bm.label);
-      set('benchmark-fee', pct(bm.fee));
-      set('benchmark-return', pct(bm.ret));
-      set('benchmark-note', bm.note);
-      root.setAttribute('data-calc-state', r.gap > 0 ? 'has-result' : 'empty');
-      if (typeof global.CustomEvent === 'function') {
-        root.dispatchEvent(new CustomEvent('feecalc:update', { detail: { result: r, benchmark: bm.id }, bubbles: true }));
-      }
-    }
-
-    // Account value is a text field so it can show commas (number fields can't).
-    if (inputs.balance) {
-      formatMoneyInput(inputs.balance);
-      inputs.balance.addEventListener('input', function () { formatMoneyInput(inputs.balance); });
-    }
-
-    Object.keys(inputs).forEach(function (k) {
-      if (inputs[k]) { inputs[k].addEventListener('input', update); inputs[k].addEventListener('change', update); }
-    });
-    buttons.forEach(function (b) {
-      if (b.tagName === 'BUTTON' && !b.getAttribute('type')) b.setAttribute('type', 'button');
-      b.addEventListener('click', function (e) { e.preventDefault(); selected = b.getAttribute('data-calc-benchmark'); update(); });
-    });
-    update();
+  function currentCountry() {
+    if (typeof document === 'undefined') return DEFAULTS.defaultCountry;
+    var c = document.documentElement.getAttribute('data-country');
+    return DEFAULTS.countries[c] ? c : DEFAULTS.defaultCountry;
   }
 
   // Adds thousands separators while typing, keeping the cursor in place.
@@ -180,12 +105,142 @@
     if (document.activeElement === el) { try { el.setSelectionRange(i, i); } catch (e) {} }
   }
 
+  // ---------------------------------------------------------------------------
+  // 4. Page wiring
+  // ---------------------------------------------------------------------------
+  function readBenchmark(btn, country) {
+    var id = btn.getAttribute('data-calc-benchmark');
+    var base = countryConfig(country).benchmarks[id] || {};
+    function attr(name, fallback, isNum) {
+      var v = btn.getAttribute(name);
+      if (v == null || v === '') return fallback;
+      return isNum ? num(v) / 100 : v;  // entered as percent: "7" = 7%, "0.09" = 0.09%
+    }
+    return {
+      id: id,
+      name: attr('data-name', base.name || id),
+      label: attr('data-label', base.label || id),
+      ret: attr('data-return', base.ret, true),
+      fee: attr('data-fee', base.fee, true),
+      note: attr('data-note', base.note || '')
+    };
+  }
+
+  // A button belongs to a country if it (or a parent) has data-show="us"/"ca".
+  // Buttons with no data-show are used for every country.
+  function buttonCountry(btn) {
+    var holder = btn.closest ? btn.closest('[data-show]') : null;
+    return holder ? holder.getAttribute('data-show') : null;
+  }
+
+  function init(root) {
+    if (!root || root.__feeCalc) return;
+    root.__feeCalc = true;
+
+    var q = function (sel) { return root.querySelector(sel); };
+    var inputs = {
+      balance: q('[data-calc="balance"]'),
+      fee: q('[data-calc="fee"]'),
+      years: q('[data-calc="years"]')
+    };
+    var allButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-benchmark]'));
+    var country = currentCountry();
+    var selected = {}; // per country
+
+    // Webflow puts inputs inside a Form block. Stop Enter from submitting it.
+    var form = root.closest ? root.closest('form') : null;
+    if (!form && inputs.balance && inputs.balance.form) form = inputs.balance.form;
+    if (form) form.addEventListener('submit', function (e) { e.preventDefault(); });
+
+    function buttonsFor(c) {
+      return allButtons.filter(function (b) { var bc = buttonCountry(b); return !bc || bc === c; });
+    }
+    function selectedId() {
+      if (!selected[country]) {
+        var firstAttr = root.getAttribute('data-calc-default');
+        var cfg = countryConfig(country);
+        var btns = buttonsFor(country);
+        var ids = btns.map(function (b) { return b.getAttribute('data-calc-benchmark'); });
+        selected[country] = (firstAttr && ids.indexOf(firstAttr) > -1) ? firstAttr
+          : (ids.indexOf(cfg.defaultBenchmark) > -1 || !ids.length) ? cfg.defaultBenchmark : ids[0];
+      }
+      return selected[country];
+    }
+    function currentBenchmark() {
+      var id = selectedId();
+      var btn = buttonsFor(country).filter(function (b) { return b.getAttribute('data-calc-benchmark') === id; })[0];
+      if (btn) return readBenchmark(btn, country);
+      var d = countryConfig(country).benchmarks[id] || countryConfig(country).benchmarks[countryConfig(country).defaultBenchmark];
+      return { id: id, name: d.name, label: d.label, ret: d.ret, fee: d.fee, note: d.note };
+    }
+
+    function set(name, text) {
+      var nodes = root.querySelectorAll('[data-calc-out="' + name + '"]');
+      for (var i = 0; i < nodes.length; i++) nodes[i].textContent = text;
+    }
+
+    function update() {
+      var bm = currentBenchmark();
+      var r = calculate({
+        balance: inputs.balance ? inputs.balance.value : 0,
+        feePct: inputs.fee ? inputs.fee.value : 0,
+        years: inputs.years ? inputs.years.value : 20,
+        benchmark: bm,
+        inflation: root.getAttribute('data-calc-inflation')
+      });
+      var visible = buttonsFor(country);
+      allButtons.forEach(function (b) {
+        var on = visible.indexOf(b) > -1 && b.getAttribute('data-calc-benchmark') === bm.id;
+        b.classList.toggle('is-selected', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      set('currency', countryConfig(country).currency);
+      set('fee-this-year', money(r.feeThisYear));
+      set('value-at-fee', money(r.valueAtFee));
+      set('value-at-low-cost', money(r.valueAtLowCost));
+      set('fees-paid', money(r.feesPaid));
+      set('gap', money(r.gap));
+      set('gap-today', money(r.gapTodayDollars));
+      set('years', String(r.years));
+      set('benchmark-name', bm.name);
+      set('benchmark-label', bm.label);
+      set('benchmark-fee', pct(bm.fee));
+      set('benchmark-return', pct(bm.ret));
+      set('benchmark-note', bm.note);
+      root.setAttribute('data-calc-state', r.gap > 0 ? 'has-result' : 'empty');
+      if (typeof global.CustomEvent === 'function') {
+        root.dispatchEvent(new CustomEvent('feecalc:update', { detail: { result: r, benchmark: bm.id, country: country }, bubbles: true }));
+      }
+    }
+
+    if (inputs.balance) {
+      formatMoneyInput(inputs.balance);
+      inputs.balance.addEventListener('input', function () { formatMoneyInput(inputs.balance); });
+    }
+    Object.keys(inputs).forEach(function (k) {
+      if (inputs[k]) { inputs[k].addEventListener('input', update); inputs[k].addEventListener('change', update); }
+    });
+    allButtons.forEach(function (b) {
+      if (b.tagName === 'BUTTON' && !b.getAttribute('type')) b.setAttribute('type', 'button');
+      b.addEventListener('click', function (e) {
+        e.preventDefault();
+        selected[country] = b.getAttribute('data-calc-benchmark');
+        update();
+      });
+    });
+    document.addEventListener('country:change', function () { country = currentCountry(); update(); });
+    update();
+  }
+
   function initAll() {
     var roots = document.querySelectorAll('[data-calc-root]');
     for (var i = 0; i < roots.length; i++) init(roots[i]);
   }
 
-  var api = { calculate: calculate, init: init, initAll: initAll, defaults: DEFAULTS, format: { money: money, pct: pct } };
+  var api = {
+    calculate: calculate, init: init, initAll: initAll, defaults: DEFAULTS,
+    format: { money: money, pct: pct }
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   global.PWSFeeCalc = api;
 

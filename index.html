@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-country="us">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -122,7 +122,29 @@ section{scroll-margin-top:16px}
   .pad{padding-top:72px;padding-bottom:72px}
   .panel{padding:22px}
 }
+
+/* country switching */
+html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"]{display:none !important}
+.nav-country{font:inherit;font-size:14px;color:var(--mist);background:transparent;border:1px solid #3a4b5e;padding:10px 14px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.nav-country:hover{color:#fff;border-color:#5c6b7a}
+.nav-country svg{flex:none}
+#country-dialog{border:0;padding:0;width:calc(100% - 32px);max-width:560px;color:var(--ink);background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+#country-dialog::backdrop{background:rgba(12,26,42,.72)}
+.cd-body{padding:40px 36px 32px;display:flex;flex-direction:column;gap:14px;position:relative}
+.cd-body h2{font-size:34px;line-height:1.1}
+.cd-body p{font-size:15px;line-height:1.6;color:var(--body)}
+.cd-close{position:absolute;top:10px;right:10px;width:44px;height:44px;border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:24px;line-height:1}
+.cd-close:hover{color:var(--ink)}
+.cd-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}
+.cd-options button{font:inherit;text-align:left;cursor:pointer;padding:18px;border:1px solid #9a9a9a;background:#fff;color:var(--ink);display:flex;flex-direction:column;gap:6px;min-height:110px}
+.cd-options button:hover{border-color:var(--navy)}
+.cd-options button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cd-options b{font-size:18px;font-weight:600}
+.cd-options small{font-size:13px;opacity:.8;line-height:1.45}
+.cd-fine{font-size:12px !important;color:var(--muted) !important}
+@media (max-width:480px){.cd-options{grid-template-columns:1fr}.cd-body{padding:36px 22px 24px}}
 </style>
+<script src="src/country.js"></script>
 </head>
 <body>
 
@@ -137,6 +159,10 @@ section{scroll-margin-top:16px}
       <a href="#sample">Sample report</a>
       <a href="#calculator">Fee calculator</a>
       <a href="#fees">Services &amp; fees</a>
+      <button type="button" class="nav-country" data-open-country aria-label="Change country">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 2.5 15.2 0 18M12 3c-2.5 2.8-2.5 15.2 0 18"/></svg>
+        <span data-country-label>United States</span>
+      </button>
       <a class="btn btn-aqua" href="https://calendly.com/profofwallstreet/15min" target="_blank" rel="noopener">Book a call</a>
     </div>
   </nav>
@@ -160,7 +186,8 @@ section{scroll-margin-top:16px}
       </div>
       <div class="stack copy">
         <p>One fee goes to the advisor. The other sits inside the funds. Statements don't add them up, and a rising balance looks like good performance even when much of it is your own savings.</p>
-        <p>Starting with annual reports covering 2026, Canadian investors will see their total costs in dollars for the first time. The natural next question is whether those costs paid for themselves.</p>
+        <p data-show="us">Advisory fees show up on your statement. Fund expense ratios don't: they come out of returns before you ever see them. The natural question is whether the total paid for itself.</p>
+        <p data-show="ca">Starting with annual reports covering 2026, Canadian investors will see their total costs in dollars for the first time. The natural next question is whether those costs paid for themselves.</p>
       </div>
     </div>
   </section>
@@ -187,7 +214,7 @@ section{scroll-margin-top:16px}
         <h2 class="serif">Three steps to the Epiphany</h2>
       </div>
       <div class="steps">
-        <div><span>01</span><h3>Send your records</h3><p>Statements, your annual Report on Charges, and Fund Facts. Your advisor can send them directly.</p></div>
+        <div><span>01</span><h3>Send your records</h3><p data-show="us">Statements, your advisor's fee schedule (Form ADV Part 2A), and fund fact sheets. Your advisor can send them directly.</p><p data-show="ca">Statements, your annual Report on Charges, and Fund Facts. Your advisor can send them directly.</p></div>
         <div><span>02</span><h3>I run the analysis</h3><p>Returns before and after fees, every cost, key buy and sell decisions, and fit with your plan.</p></div>
         <div><span>03</span><h3>We review it together</h3><p>A one-page report, a 60-minute walkthrough, and clear questions to raise with your advisor.</p></div>
       </div>
@@ -218,13 +245,14 @@ section{scroll-margin-top:16px}
 
   <section id="calculator" class="calc">
     <div class="wrap pad">
-      <div class="two" style="align-items:start" data-calc-root data-calc-default="sp">
+      <div class="two" style="align-items:start" data-calc-root>
         <div class="stack">
           <span class="eyebrow">Free fee calculator</span>
           <h2 class="serif">What will your fees cost you?</h2>
-          <p class="copy" style="font-size:16px">Enter your account value and your all-in cost, including the fees inside your funds. Your annual Report on Charges and Fund Facts have the numbers.</p>
+          <p class="copy" style="font-size:16px" data-show="us">Enter your account value and your all-in cost: your advisory fee plus the expense ratios of your funds. Your statement's fee disclosure and fund fact sheets have the numbers.</p>
+          <p class="copy" style="font-size:16px" data-show="ca">Enter your account value and your all-in cost, including the fees inside your funds and GST/HST on advisory fees. Your annual Report on Charges and Fund Facts have the numbers.</p>
           <form onsubmit="return false">
-            <label>Account value ($)
+            <label>Account value (<span data-calc-out="currency">US$</span>)
               <input type="text" inputmode="numeric" autocomplete="off" value="1,000,000" data-calc="balance">
             </label>
             <label>All-in cost (% a year)
@@ -235,11 +263,17 @@ section{scroll-margin-top:16px}
             </label>
             <fieldset>
               <legend>Benchmark to compare against</legend>
-              <div class="bm">
+              <div class="bm" data-show="us">
                 <button type="button" data-calc-benchmark="sp"><b>S&amp;P 500</b><small>U.S. large companies</small></button>
                 <button type="button" data-calc-benchmark="qqq"><b>NASDAQ-100</b><small>QQQ · growth and tech</small></button>
                 <button type="button" data-calc-benchmark="bal"><b>60/40 portfolio</b><small>60% stocks, 40% bonds</small></button>
-                <button type="button" data-calc-benchmark="cash"><b>Cash</b><small>Savings or money market</small></button>
+                <button type="button" data-calc-benchmark="cash"><b>Cash</b><small>Money market fund</small></button>
+              </div>
+              <div class="bm" data-show="ca">
+                <button type="button" data-calc-benchmark="tsx"><b>S&amp;P/TSX</b><small>Canadian companies</small></button>
+                <button type="button" data-calc-benchmark="sp"><b>S&amp;P 500</b><small>U.S. large companies, in CAD</small></button>
+                <button type="button" data-calc-benchmark="bal"><b>60/40 portfolio</b><small>60% stocks, 40% bonds</small></button>
+                <button type="button" data-calc-benchmark="cash"><b>Cash</b><small>High-interest savings ETF</small></button>
               </div>
               <p class="bm-note" data-calc-out="benchmark-note"></p>
             </fieldset>
@@ -276,8 +310,10 @@ section{scroll-margin-top:16px}
     <div class="wrap two" style="padding-top:80px;padding-bottom:80px;align-items:center;gap:48px">
       <div class="stack" style="gap:14px">
         <span class="eyebrow">Built on the research</span>
-        <h2 class="serif" style="font-size:34px;line-height:1.15">Over ten years, 97–99% of equity funds sold in Canada trailed their benchmark.</h2>
-        <p class="fine">S&amp;P Dow Jones Indices, SPIVA Canada Year-End 2025.</p>
+        <h2 class="serif" style="font-size:34px;line-height:1.15" data-show="us">Over fifteen years, about 90% of U.S. large-cap funds trailed the S&amp;P 500.</h2>
+        <p class="fine" data-show="us">S&amp;P Dow Jones Indices, SPIVA U.S. Year-End 2025.</p>
+        <h2 class="serif" style="font-size:34px;line-height:1.15" data-show="ca">Over ten years, 97–99% of equity funds sold in Canada trailed their benchmark.</h2>
+        <p class="fine" data-show="ca">S&amp;P Dow Jones Indices, SPIVA Canada Year-End 2025.</p>
       </div>
       <p class="copy" style="font-size:15px">The method draws on peer-reviewed studies of Canadian advisors and their clients, including work by Foerster, Linnainmaa, Melzer and Previtero in the Journal of Finance.</p>
     </div>
@@ -316,6 +352,20 @@ section{scroll-margin-top:16px}
     </div>
   </div>
 </footer>
+
+<dialog id="country-dialog" aria-labelledby="cd-title">
+  <div class="cd-body">
+    <form method="dialog"><button class="cd-close" aria-label="Close and continue with United States">×</button></form>
+    <span class="eyebrow">Welcome</span>
+    <h2 id="cd-title" class="serif">Where do you invest?</h2>
+    <p>Fees, benchmarks and disclosure rules differ by country. Choose yours and the site, including the fee calculator, will match.</p>
+    <div class="cd-options">
+      <button type="button" class="primary" data-set-country="us" autofocus><b>United States</b><small>US$ · S&amp;P 500, NASDAQ-100 · advisory fees and expense ratios</small></button>
+      <button type="button" data-set-country="ca"><b>Canada</b><small>C$ · S&amp;P/TSX · MERs, Report on Charges, total cost reporting</small></button>
+    </div>
+    <p class="cd-fine">You can change this anytime from the menu. Your choice is saved only in this browser.</p>
+  </div>
+</dialog>
 
 <script src="src/fee-calculator.js"></script>
 </body>

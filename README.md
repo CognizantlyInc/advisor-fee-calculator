@@ -35,18 +35,50 @@ subtract the fee. No further deposits or withdrawals.
 
 ## Assumptions (illustrative, review before launch)
 
-| Benchmark | Return before fees | Low-cost fee |
-|---|---|---|
-| S&P 500 (`sp`) | 7.0% | 0.09% |
-| NASDAQ-100, QQQ (`qqq`) | 8.0% | 0.20% |
-| 60/40 portfolio (`bal`) | 5.5% | 0.22% |
-| Cash (`cash`) | 3.0% | 0.11% |
+The calculator has a United States version (the default) and a Canada version.
+Returns are long-run estimates set for illustration, not forecasts. Low-cost
+fees are typical of index ETFs in each market (checked November 2026).
+
+**United States** (US$)
+
+| Benchmark | Return before fees | Low-cost fee | Example |
+|---|---|---|---|
+| S&P 500 (`sp`) | 7.0% | 0.03% | S&P 500 index ETF such as VOO |
+| NASDAQ-100 (`qqq`) | 8.0% | 0.20% | QQQ |
+| 60/40 portfolio (`bal`) | 5.5% | 0.10% | Balanced index fund |
+| Cash (`cash`) | 3.0% | 0.10% | Money market fund |
+
+**Canada** (C$)
+
+| Benchmark | Return before fees | Low-cost fee | Example |
+|---|---|---|---|
+| S&P/TSX Composite (`tsx`) | 6.5% | 0.06% | XIC |
+| S&P 500 in CAD (`sp`) | 7.0% | 0.09% | VFV |
+| 60/40 portfolio (`bal`) | 5.5% | 0.24% | VBAL |
+| Cash (`cash`) | 3.0% | 0.11% | CASH (high-interest savings ETF) |
 
 Inflation for "today's dollars": 2%.
 
-These are long-run estimates set for illustration, not forecasts. Change them
-in `DEFAULTS` at the top of `src/fee-calculator.js`, or on Webflow through the
-CMS (below) without touching code.
+Change them in `DEFAULTS.countries` at the top of `src/fee-calculator.js`, or
+per button with `data-return` / `data-fee` (in percent).
+
+## Country selection (US / Canada)
+
+`src/country.js` asks first-time visitors where they invest and switches the
+whole page. Load it in the `<head>` so the right content shows immediately.
+
+- `<html data-country="us">` holds the current country. US is the default.
+- Any element with `data-show="us"` or `data-show="ca"` only appears for that
+  country. Add the CSS rule from `index.html` (search for `data-show`).
+- The first-visit pop-up is `<dialog id="country-dialog">` with buttons
+  `data-set-country="us"` and `data-set-country="ca"`. Closing it without
+  choosing keeps US.
+- Any element with `data-open-country` reopens the pop-up (the menu button).
+- Elements with `data-country-label` show "United States" or "Canada".
+- The choice is saved in the visitor's own browser (`localStorage`, key
+  `pws-country`). Nothing is sent anywhere.
+- In the calculator, wrap each country's benchmark buttons in an element with
+  `data-show="us"` or `data-show="ca"`. `data-calc-out="currency"` shows US$ or C$.
 
 ## Putting it on Webflow
 
