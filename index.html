@@ -252,7 +252,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
           <p class="copy" style="font-size:16px" data-show="us">Enter your account value and your all-in cost: your advisory fee plus the expense ratios of your funds. Your statement's fee disclosure and fund fact sheets have the numbers.</p>
           <p class="copy" style="font-size:16px" data-show="ca">Enter your account value and your all-in cost, including the fees inside your funds and GST/HST on advisory fees. Your annual Report on Charges and Fund Facts have the numbers.</p>
           <form onsubmit="return false">
-            <label>Account value (<span data-calc-out="currency">US$</span>)
+            <label><span>Account value (<span data-calc-out="currency">US$</span>)</span>
               <input type="text" inputmode="numeric" autocomplete="off" value="1,000,000" data-calc="balance">
             </label>
             <label>All-in cost (% a year)
@@ -277,6 +277,13 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
               </div>
               <p class="bm-note" data-calc-out="benchmark-note"></p>
             </fieldset>
+            <fieldset>
+              <legend>Return assumption</legend>
+              <div class="bm">
+                <button type="button" data-calc-mode="historical"><b>Historical</b><small>Long-run average returns</small></button>
+                <button type="button" data-calc-mode="conservative"><b>Conservative</b><small>Lower, forward-looking</small></button>
+              </div>
+            </fieldset>
           </form>
         </div>
         <div class="panel" aria-live="polite">
@@ -286,7 +293,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
           <div class="row"><span>Value in <span data-calc-out="benchmark-label"></span> at <span data-calc-out="benchmark-fee"></span></span><strong data-calc-out="value-at-low-cost">–</strong></div>
           <div class="total"><span>Cost of your fees</span><span class="big" data-calc-out="gap">–</span></div>
           <p class="fine" style="text-align:right"><span data-calc-out="gap-today">–</span> in today's dollars</p>
-          <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span>, the same return on your portfolio before its fees, no further deposits, and 2% inflation. Return assumptions are illustrative long-run estimates. This shows cost only. Whether your advisor's investing beat its benchmark takes a full review.</p>
+          <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span> (<span data-calc-out="return-basis"></span>), the same return on your portfolio before its fees, no further deposits, and <span data-calc-out="inflation"></span> inflation for today's dollars. Past returns do not guarantee future results. This shows cost only. Whether your advisor's investing beat its benchmark takes a full review.</p>
           <a class="btn btn-navy" href="#fees" style="margin-top:16px;text-align:center">See the other half: book a review</a>
         </div>
       </div>

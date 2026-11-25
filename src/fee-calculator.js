@@ -14,28 +14,38 @@
   //    Low-cost fees reflect typical index ETFs in each market (see README).
   //    Can be overridden per button with data-return / data-fee (in percent).
   // ---------------------------------------------------------------------------
+  // Two return assumptions, chosen by the visitor:
+  //   historical:   long-run average total returns (hist / histPeriod below)
+  //   conservative: lower forward-looking estimates (ret below)
+  var MODES = {
+    historical:   { label: 'historical average', inflation: 0.03 },
+    conservative: { label: 'conservative estimate', inflation: 0.02 }
+  };
+
   var DEFAULTS = {
     inflation: 0.02,
+    defaultMode: 'historical',
+    modes: MODES,
     defaultCountry: 'us',
     countries: {
       us: {
         currency: 'US$',
         defaultBenchmark: 'sp',
         benchmarks: {
-          sp:   { name: 'S&P 500',         label: 'an S&P 500 index ETF',     ret: 0.07,  fee: 0.0003, note: 'For all-equity mandates focused on large U.S. companies.' },
-          qqq:  { name: 'NASDAQ-100',      label: 'a NASDAQ-100 ETF (QQQ)',   ret: 0.08,  fee: 0.0020, note: 'For growth mandates concentrated in U.S. technology. Higher expected return, with larger swings.' },
-          bal:  { name: '60/40 portfolio', label: 'a 60/40 balanced index fund', ret: 0.055, fee: 0.0010, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
-          cash: { name: 'Cash',            label: 'a money market fund',      ret: 0.03,  fee: 0.0010, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
+          sp:   { name: 'S&P 500',         label: 'an S&P 500 index ETF',     ret: 0.07,  hist: 0.100, histPeriod: '1928–2025', fee: 0.0003, note: 'For all-equity mandates focused on large U.S. companies.' },
+          qqq:  { name: 'NASDAQ-100',      label: 'a NASDAQ-100 ETF (QQQ)',   ret: 0.08,  hist: 0.1425, histPeriod: '1985–2024', fee: 0.0020, note: 'For growth mandates concentrated in U.S. technology. Higher expected return, with larger swings.' },
+          bal:  { name: '60/40 portfolio', label: 'a 60/40 balanced index fund', ret: 0.055, hist: 0.078, histPeriod: '1928–2025', fee: 0.0010, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
+          cash: { name: 'Cash',            label: 'a money market fund',      ret: 0.03,  hist: 0.034, histPeriod: '1928–2025', fee: 0.0010, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
         }
       },
       ca: {
         currency: 'C$',
         defaultBenchmark: 'tsx',
         benchmarks: {
-          tsx:  { name: 'S&P/TSX Composite', label: 'a TSX index ETF',              ret: 0.065, fee: 0.0006, note: 'For Canadian equity mandates.' },
-          sp:   { name: 'S&P 500',           label: 'an S&P 500 index ETF in CAD',  ret: 0.07,  fee: 0.0009, note: 'For all-equity mandates focused on large U.S. companies, held in Canadian dollars.' },
-          bal:  { name: '60/40 portfolio',   label: 'a 60/40 balanced ETF',          ret: 0.055, fee: 0.0024, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
-          cash: { name: 'Cash',              label: 'a high-interest savings ETF',   ret: 0.03,  fee: 0.0011, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
+          tsx:  { name: 'S&P/TSX Composite', label: 'a TSX index ETF',              ret: 0.065, hist: 0.105, histPeriod: '1976–2025', fee: 0.0006, note: 'For Canadian equity mandates.' },
+          sp:   { name: 'S&P 500',           label: 'an S&P 500 index ETF in CAD',  ret: 0.07,  hist: 0.100, histPeriod: '1928–2025, in US$', fee: 0.0009, note: 'For all-equity mandates focused on large U.S. companies, held in Canadian dollars.' },
+          bal:  { name: '60/40 portfolio',   label: 'a 60/40 balanced ETF',          ret: 0.055, hist: 0.089, histPeriod: '1976–2025', fee: 0.0024, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
+          cash: { name: 'Cash',              label: 'a high-interest savings ETF',   ret: 0.03,  hist: 0.047, histPeriod: '1950–2025', fee: 0.0011, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
         }
       }
     }
@@ -121,6 +131,8 @@
       name: attr('data-name', base.name || id),
       label: attr('data-label', base.label || id),
       ret: attr('data-return', base.ret, true),
+      hist: attr('data-hist-return', base.hist, true),
+      histPeriod: attr('data-hist-period', base.histPeriod || ''),
       fee: attr('data-fee', base.fee, true),
       note: attr('data-note', base.note || '')
     };
@@ -146,6 +158,8 @@
     var allButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-benchmark]'));
     var country = currentCountry();
     var selected = {}; // per country
+    var modeButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-mode]'));
+    var mode = MODES[root.getAttribute('data-calc-default-mode')] ? root.getAttribute('data-calc-default-mode') : DEFAULTS.defaultMode;
 
     // Webflow puts inputs inside a Form block. Stop Enter from submitting it.
     var form = root.closest ? root.closest('form') : null;
@@ -171,7 +185,7 @@
       var btn = buttonsFor(country).filter(function (b) { return b.getAttribute('data-calc-benchmark') === id; })[0];
       if (btn) return readBenchmark(btn, country);
       var d = countryConfig(country).benchmarks[id] || countryConfig(country).benchmarks[countryConfig(country).defaultBenchmark];
-      return { id: id, name: d.name, label: d.label, ret: d.ret, fee: d.fee, note: d.note };
+      return { id: id, name: d.name, label: d.label, ret: d.ret, hist: d.hist, histPeriod: d.histPeriod, fee: d.fee, note: d.note };
     }
 
     function set(name, text) {
@@ -181,13 +195,24 @@
 
     function update() {
       var bm = currentBenchmark();
+      var useHist = mode === 'historical' && bm.hist;
+      var ret = useHist ? bm.hist : bm.ret;
+      var inflAttr = root.getAttribute('data-calc-inflation');
+      var infl = inflAttr ? num(inflAttr) : MODES[mode].inflation;
       var r = calculate({
         balance: inputs.balance ? inputs.balance.value : 0,
         feePct: inputs.fee ? inputs.fee.value : 0,
         years: inputs.years ? inputs.years.value : 20,
-        benchmark: bm,
-        inflation: root.getAttribute('data-calc-inflation')
+        benchmark: { ret: ret, fee: bm.fee },
+        inflation: infl
       });
+      modeButtons.forEach(function (b) {
+        var on = b.getAttribute('data-calc-mode') === mode;
+        b.classList.toggle('is-selected', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      set('return-basis', useHist ? 'historical average, ' + bm.histPeriod : 'conservative estimate');
+      set('inflation', pct(infl));
       var visible = buttonsFor(country);
       allButtons.forEach(function (b) {
         var on = visible.indexOf(b) > -1 && b.getAttribute('data-calc-benchmark') === bm.id;
@@ -205,11 +230,11 @@
       set('benchmark-name', bm.name);
       set('benchmark-label', bm.label);
       set('benchmark-fee', pct(bm.fee));
-      set('benchmark-return', pct(bm.ret));
+      set('benchmark-return', pct(ret));
       set('benchmark-note', bm.note);
       root.setAttribute('data-calc-state', r.gap > 0 ? 'has-result' : 'empty');
       if (typeof global.CustomEvent === 'function') {
-        root.dispatchEvent(new CustomEvent('feecalc:update', { detail: { result: r, benchmark: bm.id, country: country }, bubbles: true }));
+        root.dispatchEvent(new CustomEvent('feecalc:update', { detail: { result: r, benchmark: bm.id, country: country, mode: mode }, bubbles: true }));
       }
     }
 
@@ -227,6 +252,10 @@
         selected[country] = b.getAttribute('data-calc-benchmark');
         update();
       });
+    });
+    modeButtons.forEach(function (b) {
+      if (b.tagName === 'BUTTON' && !b.getAttribute('type')) b.setAttribute('type', 'button');
+      b.addEventListener('click', function (e) { e.preventDefault(); mode = b.getAttribute('data-calc-mode'); update(); });
     });
     document.addEventListener('country:change', function () { country = currentCountry(); update(); });
     update();

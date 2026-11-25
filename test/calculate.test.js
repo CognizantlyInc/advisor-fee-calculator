@@ -70,3 +70,25 @@ test('both countries are set up with valid benchmarks', () => {
   assert.equal(countries.us.currency, 'US$');
   assert.equal(countries.ca.currency, 'C$');
 });
+
+test('historical returns are set for every benchmark and match sources', () => {
+  const { countries, defaultMode, modes } = calc.defaults;
+  assert.equal(defaultMode, 'historical');
+  assert.ok(modes.historical && modes.conservative);
+  const expected = { us: { sp: 0.100, qqq: 0.1425, bal: 0.078, cash: 0.034 },
+                     ca: { tsx: 0.105, sp: 0.100, bal: 0.089, cash: 0.047 } };
+  for (const [code, set] of Object.entries(expected)) {
+    for (const [id, hist] of Object.entries(set)) {
+      const b = countries[code].benchmarks[id];
+      assert.equal(b.hist, hist, `${code}.${id} historical return`);
+      assert.ok(b.histPeriod, `${code}.${id} has a period`);
+      assert.ok(b.hist > b.ret, `${code}.${id} historical is above conservative`);
+    }
+  }
+});
+
+test('higher assumed return makes the cost of fees larger', () => {
+  const lo = calc.calculate({ balance: 1e6, feePct: 2, years: 20, benchmark: { ret: 0.07, fee: 0.0003 } });
+  const hi = calc.calculate({ balance: 1e6, feePct: 2, years: 20, benchmark: { ret: 0.10, fee: 0.0003 } });
+  assert.ok(hi.gap > lo.gap);
+});
