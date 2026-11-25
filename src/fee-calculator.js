@@ -150,6 +150,12 @@
       }
     }
 
+    // Account value is a text field so it can show commas (number fields can't).
+    if (inputs.balance) {
+      formatMoneyInput(inputs.balance);
+      inputs.balance.addEventListener('input', function () { formatMoneyInput(inputs.balance); });
+    }
+
     Object.keys(inputs).forEach(function (k) {
       if (inputs[k]) { inputs[k].addEventListener('input', update); inputs[k].addEventListener('change', update); }
     });
@@ -158,6 +164,20 @@
       b.addEventListener('click', function (e) { e.preventDefault(); selected = b.getAttribute('data-calc-benchmark'); update(); });
     });
     update();
+  }
+
+  // Adds thousands separators while typing, keeping the cursor in place.
+  function formatMoneyInput(el) {
+    var raw = el.value;
+    var pos = el.selectionStart == null ? raw.length : el.selectionStart;
+    var digitsBefore = raw.slice(0, pos).replace(/[^0-9]/g, '').length;
+    var digits = raw.replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, '');
+    var out = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (out === raw) return;
+    el.value = out;
+    var i = 0, seen = 0;
+    while (i < out.length && seen < digitsBefore) { if (/\d/.test(out[i])) seen++; i++; }
+    if (document.activeElement === el) { try { el.setSelectionRange(i, i); } catch (e) {} }
   }
 
   function initAll() {
