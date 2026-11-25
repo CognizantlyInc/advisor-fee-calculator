@@ -30,7 +30,11 @@ section{scroll-margin-top:16px}
 .hero{background:var(--navy);color:#fff}
 .nav{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding-top:20px;padding-bottom:20px}
 .brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:600;font-size:14px}
-.nav-links{display:flex;flex-wrap:wrap;gap:24px;align-items:center;font-size:14px}
+.brand .powered{font-size:10px;font-weight:400;letter-spacing:.28em;text-transform:uppercase;color:var(--mist);margin-right:6px}
+.brand .pws{font-size:12px;line-height:1.15;font-weight:700}
+.brand svg{margin-left:4px}
+.nav-links{display:flex;flex-wrap:wrap;gap:20px;align-items:center;font-size:14px}
+@media (max-width:1180px){.nav-links a.hide-md{display:none}}
 .nav-links a{color:var(--mist);text-decoration:none}.nav-links a:hover{color:#fff}
 .nav-links a.btn{color:var(--navy);padding:12px 18px}
 .hero-body{padding-top:96px;padding-bottom:112px;display:flex;flex-direction:column;gap:24px}
@@ -169,13 +173,14 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
 
 <header class="hero">
   <nav class="wrap nav" aria-label="Main">
-    <a class="brand" href="#top">
+    <a class="brand" href="#top" aria-label="Powered by Prof of Wall Street, back to top">
+      <span class="powered">Powered by</span>
       <svg aria-hidden="true" viewBox="0 0 26 26" width="26" height="26"><g stroke="#fff" stroke-width="2"><line x1="4" x2="4" y1="10" y2="21"/><line x1="9.5" x2="9.5" y1="6" y2="21"/><line x1="15" x2="15" y1="12" y2="21"/><line x1="20.5" x2="20.5" y1="3" y2="21"/><line x1="1" x2="24" y1="24" y2="24"/></g></svg>
-      Prof of Wall Street
+      <span class="pws">Prof of<br>Wall Street</span>
     </a>
     <div class="nav-links">
       <a href="#how">How it works</a>
-      <a href="#sample">Sample report</a>
+      <a class="hide-md" href="#sample">Sample report</a>
       <a href="#calculator">Fee calculator</a>
       <a href="#why-not-ai">Why not AI?</a>
       <a href="#fees">Services &amp; fees</a>
