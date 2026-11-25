@@ -132,6 +132,26 @@ section{scroll-margin-top:16px}
   .panel{padding:22px}
 }
 
+/* skills analysis */
+.skills{margin-top:64px;border-top:1px solid var(--ink);padding-top:32px}
+.skills-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px 32px}
+.skills-head h3{font-size:30px;line-height:1.15;max-width:640px}
+.skills-head p{font-size:15px;line-height:1.6;color:var(--body);max-width:520px}
+.skill{display:grid;grid-template-columns:minmax(150px,1.1fr) minmax(0,2fr) minmax(220px,1.4fr);gap:10px 32px;padding:20px 0;border-bottom:1px solid var(--line);align-items:center}
+.skill .sname{font-family:'EB Garamond',serif;font-size:22px;line-height:1.2}
+.skill .sname small{display:block;font-family:Inter,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+.skill .sname small.good{color:#3f7d4e}.skill .sname small.watch{color:#9a6a12}.skill .sname small.bad{color:var(--red)}
+.skill .stest{font-size:13px;color:var(--muted);line-height:1.5}
+.skill .sfind{font-size:15px;color:var(--ink);line-height:1.55;margin-top:4px}
+.sbar{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:0;height:28px;position:relative}
+.sbar::before{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:#9a9a9a}
+.sbar .neg-side{display:flex;justify-content:flex-end}.sbar .pos-side{display:flex}
+.sbar i{display:block;height:14px}
+.sbar .neg-side i{background:var(--red)}.sbar .pos-side i{background:#3f7d4e}
+.sval{font-weight:600;font-size:15px;text-align:right;margin-top:4px}
+.sval.neg{color:var(--red)}.sval.pos{color:#3f7d4e}
+.skills-total{display:flex;justify-content:space-between;gap:16px;padding:18px 0 0;font-size:17px;font-weight:600}
+@media (max-width:760px){.skill{grid-template-columns:1fr}.sbar{max-width:420px}}
 /* why not AI */
 .ai{background:var(--paper)}
 .ai-head{max-width:760px}
@@ -270,6 +290,41 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
           <div><small>All-in cost today</small><b>$42,300</b><small>2.20% a year</small></div>
         </div>
       </div>
+    </div>
+    <div class="skills">
+      <div class="skills-head">
+        <h3 class="serif">Skills analysis: where the <span style="white-space:nowrap">−$620K</span> came from</h3>
+        <p>Prof of Wall Street measures five decisions behind your advisor's performance, trade by trade, and puts a dollar figure on each one.</p>
+      </div>
+      <div style="margin-top:24px;border-top:1px solid #9a9a9a">
+        <div class="skill">
+          <div class="sname">Stock picking<small class="good">Strength</small></div>
+          <div><p class="stest">Did the stocks bought beat the benchmark over the following year?</p><p class="sfind">Picks beat the S&amp;P 500 by a small margin.</p></div>
+          <div><div class="sbar" aria-hidden="true"><span class="neg-side"></span><span class="pos-side"><i style="width:31%"></i></span></div><p class="sval pos">+$95K</p></div>
+        </div>
+        <div class="skill">
+          <div class="sname">Position sizing<small class="watch">Watch</small></div>
+          <div><p class="stest">Did the biggest positions do better than the smaller ones?</p><p class="sfind">The largest positions lagged. Equal weighting would have done better.</p></div>
+          <div><div class="sbar" aria-hidden="true"><span class="neg-side"><i style="width:45%"></i></span><span class="pos-side"></span></div><p class="sval neg">−$140K</p></div>
+        </div>
+        <div class="skill">
+          <div class="sname">Selling<small class="bad">Concern</small></div>
+          <div><p class="stest">How did stocks do after they were sold, compared with what replaced them?</p><p class="sfind">Sold stocks kept rising and beat their replacements.</p></div>
+          <div><div class="sbar" aria-hidden="true"><span class="neg-side"><i style="width:100%"></i></span><span class="pos-side"></span></div><p class="sval neg">−$310K</p></div>
+        </div>
+        <div class="skill">
+          <div class="sname">Dip buying<small class="watch">Watch</small></div>
+          <div><p class="stest">Did adding to positions after they fell pay off?</p><p class="sfind">Averaging down mostly added money to stocks that kept falling.</p></div>
+          <div><div class="sbar" aria-hidden="true"><span class="neg-side"><i style="width:39%"></i></span><span class="pos-side"></span></div><p class="sval neg">−$120K</p></div>
+        </div>
+        <div class="skill">
+          <div class="sname">Winners and losers<small class="bad">Concern</small></div>
+          <div><p class="stest">Were winners allowed to run and losers cut?</p><p class="sfind">Losers were held too long and winners trimmed early.</p></div>
+          <div><div class="sbar" aria-hidden="true"><span class="neg-side"><i style="width:47%"></i></span><span class="pos-side"></span></div><p class="sval neg">−$145K</p></div>
+        </div>
+      </div>
+      <div class="skills-total"><span>Total effect of these decisions, before fees</span><span class="neg" style="white-space:nowrap">−$620K</span></div>
+      <p class="fine" style="margin-top:8px">Illustrative example using hypothetical data. The five figures add up to the performance gap shown above.</p>
     </div>
   </section>
 
