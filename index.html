@@ -123,6 +123,25 @@ section{scroll-margin-top:16px}
   .panel{padding:22px}
 }
 
+/* why not AI */
+.ai{background:var(--paper)}
+.ai-head{max-width:760px}
+.ai-table{margin-top:40px;border-top:1px solid var(--ink)}
+.ai-row{display:grid;grid-template-columns:minmax(140px,1fr) minmax(0,1.4fr) minmax(0,1.6fr);gap:12px 32px;padding:20px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.ai-row.head{padding:12px 0;border-bottom:1px solid #9a9a9a}
+.ai-row.head span{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.ai-row.head span:last-child{color:var(--navy);font-weight:600}
+.ai-row .topic{font-family:'EB Garamond',serif;font-size:22px;line-height:1.2}
+.ai-row .bot{font-size:15px;line-height:1.6;color:var(--muted)}
+.ai-row .us{font-size:15px;line-height:1.6;color:var(--ink)}
+.ai-close{margin-top:40px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:24px}
+.ai-close p{font-family:'EB Garamond',serif;font-size:24px;line-height:1.35;max-width:640px}
+@media (max-width:720px){
+  .ai-row{grid-template-columns:1fr;gap:6px}
+  .ai-row.head{display:none}
+  .ai-row .bot::before{content:"An AI chatbot: ";font-weight:600;color:var(--muted)}
+  .ai-row .us::before{content:"A Full Review: ";font-weight:600;color:var(--navy)}
+}
 /* country switching */
 html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"]{display:none !important}
 .nav-country{font:inherit;font-size:14px;color:var(--mist);background:transparent;border:1px solid #3a4b5e;padding:10px 14px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
@@ -158,6 +177,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
       <a href="#how">How it works</a>
       <a href="#sample">Sample report</a>
       <a href="#calculator">Fee calculator</a>
+      <a href="#why-not-ai">Why not AI?</a>
       <a href="#fees">Services &amp; fees</a>
       <button type="button" class="nav-country" data-open-country aria-label="Change country">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 2.5 15.2 0 18M12 3c-2.5 2.8-2.5 15.2 0 18"/></svg>
@@ -296,6 +316,29 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
           <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span> (<span data-calc-out="return-basis"></span>), the same return on your portfolio before its fees, no further deposits, and <span data-calc-out="inflation"></span> inflation for today's dollars. Past returns do not guarantee future results. This shows cost only. Whether your advisor's investing beat its benchmark takes a full review.</p>
           <a class="btn btn-navy" href="#fees" style="margin-top:16px;text-align:center">See the other half: book a review</a>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="why-not-ai" class="ai">
+    <div class="wrap pad">
+      <div class="ai-head stack">
+        <span class="eyebrow">Why not just ask AI?</span>
+        <h2 class="serif">AI can do the arithmetic. A trustworthy answer takes more.</h2>
+        <p class="copy">Go ahead and use it. The calculator above does the math for free. But the number is only as good as what goes into it, and a chatbot can't gather your records, choose a fair comparison, or stand behind the result.</p>
+      </div>
+      <div class="ai-table" role="table" aria-label="An AI chatbot compared with a Full Review">
+        <div class="ai-row head" role="row"><span role="columnheader"></span><span role="columnheader">An AI chatbot</span><span role="columnheader">A Full Review</span></div>
+        <div class="ai-row" role="row"><span class="topic" role="rowheader">Your numbers</span><span class="bot" role="cell">Works with whatever you type in.</span><span class="us" role="cell">Pulled and reconciled from your statements, including the fees inside your funds that never appear as a line item.</span></div>
+        <div class="ai-row" role="row"><span class="topic" role="rowheader">The comparison</span><span class="bot" role="cell">Usually "the market."</span><span class="us" role="cell">A benchmark matched to your mandate and risk, and an explanation of why it's fair.</span></div>
+        <div class="ai-row" role="row"><span class="topic" role="rowheader">Your advisor's decisions</span><span class="bot" role="cell">Can't see your trades.</span><span class="us" role="cell">Every buy, sell and switch measured, so you know which choices added value and which cost you.</span></div>
+        <div class="ai-row" role="row"><span class="topic" role="rowheader">Accuracy</span><span class="bot" role="cell">Can sound certain and still be wrong.</span><span class="us" role="cell">Every calculation checked, using published research methods.</span></div>
+        <div class="ai-row" role="row"><span class="topic" role="rowheader">Accountability</span><span class="bot" role="cell">No one stands behind the answer.</span><span class="us" role="cell">An independent PhD's name on the report. I don't sell investments, so the only thing I'm selling is an honest answer.</span></div>
+        <div class="ai-row" role="row"><span class="topic" role="rowheader">What happens next</span><span class="bot" role="cell">You're on your own.</span><span class="us" role="cell">A walkthrough of your results and clear questions to raise at your next advisor meeting.</span></div>
+      </div>
+      <div class="ai-close">
+        <p>Use AI and the calculator to see what your fees cost. Book a review to find out whether you're getting your money's worth.</p>
+        <a class="btn btn-navy" href="https://calendly.com/profofwallstreet/15min" target="_blank" rel="noopener">Book a 15-minute call</a>
       </div>
     </div>
   </section>
