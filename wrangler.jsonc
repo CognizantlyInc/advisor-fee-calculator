@@ -6,6 +6,12 @@
   "name": "advisor-fee-calculator",
   "main": "src/worker.mjs",
   "compatibility_date": "2025-11-01",
+  // Keep the custom domains attached on every deploy.
+  "routes": [
+    { "pattern": "worththefees.com", "custom_domain": true },
+    { "pattern": "www.worththefees.com", "custom_domain": true }
+  ],
+  "workers_dev": true,
   "assets": {
     "directory": "./",
     "binding": "ASSETS",
