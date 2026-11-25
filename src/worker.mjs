@@ -110,7 +110,7 @@ function loginHtml(message) {
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:#f7f4ee;color:#1b1b1b;font-family:'IBM Plex Sans',Arial,sans-serif;display:flex;flex-direction:column}
-header{max-width:1120px;width:100%;margin:0 auto;padding:36px 40px 0;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px}
+header{max-width:1120px;width:100%;margin:0 auto;padding:36px 40px 0;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
 header .brand{font-family:Newsreader,Georgia,serif;font-size:22px}
 header .tag{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6b665c}
 main{flex:1;display:flex;align-items:center;justify-content:center;padding:64px 24px}
@@ -125,11 +125,12 @@ input:focus{border-bottom:2px solid #2f4a3a}
 button{align-self:flex-start;font:inherit;font-size:15px;letter-spacing:.04em;padding:16px 28px;min-height:48px;background:#1f2e25;color:#f7f4ee;border:0;cursor:pointer}
 button:hover{background:#2f4a3a}
 .msg{margin:0;font-size:14px;line-height:1.5;color:#8a3a2e}
+.pws{display:inline-flex;align-items:center;gap:8px;color:#1b1b1b}.pws .pw-label{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#6b665c;margin-right:4px}.pws .pw-name{font-family:'IBM Plex Sans',Arial,sans-serif;font-size:11px;line-height:1.15;font-weight:500}
 footer{max-width:1120px;width:100%;margin:0 auto;padding:24px 40px 36px;font-size:12px;color:#6b665c}
 </style>
 </head>
 <body>
-<header><span class="brand">Prof of Wall Street</span><span class="tag">Private &amp; confidential</span></header>
+<header><span class="pws"><span class="pw-label">Powered by</span><svg aria-hidden="true" viewBox="0 0 26 26" width="22" height="22"><g stroke="currentColor" stroke-width="2"><line x1="4" x2="4" y1="10" y2="21"/><line x1="9.5" x2="9.5" y1="6" y2="21"/><line x1="15" x2="15" y1="12" y2="21"/><line x1="20.5" x2="20.5" y1="3" y2="21"/><line x1="1" x2="24" y1="24" y2="24"/></g></svg><span class="pw-name">Prof of<br>Wall Street</span></span><span class="tag">Private &amp; confidential</span></header>
 <main>
   <div class="box">
     <p class="eyebrow">Prepared for the families of Ciccone McKay</p>
