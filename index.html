@@ -53,6 +53,13 @@ section{scroll-margin-top:16px}
 .stack{display:flex;flex-direction:column;gap:16px}
 .copy{font-size:17px;line-height:1.7;color:var(--body)}
 .pad{padding-top:96px;padding-bottom:96px}
+.papers{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.papers li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:8px 40px;padding:22px 0;border-bottom:1px solid var(--line)}
+.papers .cite{font-size:14px;line-height:1.55;color:var(--muted)}
+.papers .cite b{display:block;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:19px;line-height:1.3;color:var(--ink);margin-bottom:4px}
+.papers .find{font-size:16px;line-height:1.65;color:var(--body)}
+@media (max-width:760px){.papers li{grid-template-columns:1fr}}
+
 .band{background:var(--paper)}
 
 /* questions */
@@ -208,6 +215,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
       <a class="hide-md" href="#sample">Sample report</a>
       <a href="#calculator">Fee calculator</a>
       <a href="#why-not-ai">Why not AI?</a>
+      <a class="hide-md" href="#research">Research</a>
       <a href="#fees">Services &amp; fees</a>
       <button type="button" class="nav-country" data-open-country aria-label="Change country">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 2.5 15.2 0 18M12 3c-2.5 2.8-2.5 15.2 0 18"/></svg>
@@ -432,6 +440,24 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
       </div>
       <p class="copy" style="font-size:15px">The method draws on peer-reviewed studies of Canadian advisors and their clients, including work by Foerster, Linnainmaa, Melzer and Previtero in the Journal of Finance.</p>
     </div>
+  </section>
+
+  <section id="research" class="wrap pad">
+    <div class="stack" style="gap:14px;max-width:760px">
+      <span class="eyebrow">Research on financial advice</span>
+      <h2 class="serif">Decades of research find that, after fees, advice rarely pays for itself.</h2>
+      <p class="copy">These peer-reviewed studies track real client accounts, mystery-shopper visits and fund sales. Most find that advised investors end up with lower returns than a simple, low-cost alternative once fees are counted.</p>
+    </div>
+    <ul class="papers" style="margin-top:40px">
+          <li><div class="cite"><b>Retail Financial Advice: Does One Size Fit All?</b>Foerster, Linnainmaa, Melzer &amp; Previtero · <i>Journal of Finance</i>, 2017</div><p class="find">Studied hundreds of thousands of Canadian client accounts. Clients paid about 2.7% a year in total fees, more than the extra return the advice delivered. Portfolios reflected the advisor's habits more than the client's needs.</p></li>
+          <li><div class="cite"><b>The Misguided Beliefs of Financial Advisors</b>Linnainmaa, Melzer &amp; Previtero · <i>Journal of Finance</i>, 2021</div><p class="find">Advisors invest their own money in the same costly, frequently traded funds they sell. Their personal portfolios underperform too, so much poor advice is sincerely held.</p></li>
+          <li><div class="cite"><b>Assessing the Costs and Benefits of Brokers in the Mutual Fund Industry</b>Bergstresser, Chalmers &amp; Tufano · <i>Review of Financial Studies</i>, 2009</div><p class="find">Funds sold through brokers delivered lower risk-adjusted returns than funds bought directly, even before sales charges. The authors found no offsetting benefit in fund selection or timing.</p></li>
+          <li><div class="cite"><b>Is Conflicted Investment Advice Better than No Advice?</b>Chalmers &amp; Reuter · <i>Journal of Financial Economics</i>, 2020</div><p class="find">Retirement savers who used brokers earned lower returns than they would have in the plan's default target-date fund.</p></li>
+          <li><div class="cite"><b>Financial Advisors: A Case of Babysitters?</b>Hackethal, Haliassos &amp; Jappelli · <i>Journal of Banking &amp; Finance</i>, 2012</div><p class="find">Advised accounts earned lower net returns, traded more and took on more risk than comparable self-directed accounts.</p></li>
+          <li><div class="cite"><b>The Market for Financial Advice: An Audit Study</b>Mullainathan, Noeth &amp; Schoar · NBER Working Paper, 2012</div><p class="find">Trained mystery shoppers visited advisors. Advisors tended to reinforce clients' costly biases, such as chasing returns, and steered them toward higher-fee active funds.</p></li>
+          <li><div class="cite"><b>Mutual Fund Performance and the Incentive to Generate Alpha</b>Del Guercio &amp; Reuter · <i>Journal of Finance</i>, 2014</div><p class="find">Actively managed funds sold through brokers underperformed index funds. Comparable funds sold directly to investors did not.</p></li>
+    </ul>
+    <p class="fine" style="margin-top:20px;max-width:760px">Advice can still add value that returns don't capture, such as the trust that lets people invest with less anxiety (Gennaioli, Shleifer &amp; Vishny, <i>Journal of Finance</i>, 2015). A review shows whether that value is worth what you pay.</p>
   </section>
 
   <section class="wrap pad">
