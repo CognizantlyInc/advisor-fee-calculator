@@ -42,6 +42,10 @@ section{scroll-margin-top:16px}
 @media (max-width:1180px){.nav-links a.hide-md{display:none}}
 .nav-links a{color:var(--mist);text-decoration:none}.nav-links a:hover{color:#fff}
 .nav-links a.btn{color:var(--navy);padding:12px 18px}
+.nav-links a.nav-calc{color:var(--aqua);border:1px solid var(--aqua);padding:10px 16px;font-weight:600}
+.nav-links a.nav-calc:hover{background:var(--aqua);color:var(--navy)}
+.calc-top{border-top:1px solid #1d3550}
+html{scroll-padding-top:12px}
 .hero-body{padding-top:96px;padding-bottom:112px;display:flex;flex-direction:column;gap:24px}
 .hero .eyebrow{color:var(--mist)}
 .hero h1{font-size:clamp(44px,6vw,76px);line-height:1.04;max-width:820px}
@@ -223,9 +227,9 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
       <span class="pws">Prof of<br>Wall Street</span>
     </a>
     <div class="nav-links">
+      <a class="nav-calc" href="#calculator">Fee calculator</a>
       <a href="#how">How the Service Works</a>
       <a class="hide-md" href="#sample">Sample report</a>
-      <a href="#calculator">Fee calculator</a>
       <a href="#why-not-ai">Why not AI?</a>
       <a class="hide-md" href="#research">Research</a>
       <a href="#fees">Services &amp; fees</a>
@@ -241,13 +245,70 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
     <h1 class="serif">Is your financial advisor worth the fees?</h1>
     <p class="lede">An independent review of how your portfolio has been managed. What you really earned, what you really pay, and the questions to ask at your next meeting.</p>
     <div class="ctas">
-      <a class="btn btn-aqua" href="https://calendly.com/profofwallstreet/15min" target="_blank" rel="noopener">Book a 15-minute call</a>
-      <a class="btn btn-ghost" href="#calculator">Free fee impact calculator</a>
+      <a class="btn btn-aqua" href="#calculator">Calculate your fees, free</a>
+      <a class="btn btn-ghost" href="https://calendly.com/profofwallstreet/15min" target="_blank" rel="noopener">Book a 15-minute call</a>
     </div>
   </div>
 </header>
 
 <main>
+  <section id="calculator" class="calc calc-top">
+    <div class="wrap pad">
+      <div class="two" style="align-items:start" data-calc-root>
+        <div class="stack">
+          <span class="eyebrow">Free fee calculator</span>
+          <h2 class="serif">What will your fees cost you?</h2>
+          <p class="copy" style="font-size:16px" data-show="us">Enter your account value and your all-in cost: your advisory fee plus the expense ratios of your funds. Your statement's fee disclosure and fund fact sheets have the numbers.</p>
+          <p class="copy" style="font-size:16px" data-show="ca">Enter your account value and your all-in cost, including the fees inside your funds and GST/HST on advisory fees. Your annual Report on Charges and Fund Facts have the numbers.</p>
+          <form onsubmit="return false">
+            <label><span>Account value (<span data-calc-out="currency">US$</span>)</span>
+              <input type="text" inputmode="numeric" autocomplete="off" value="1,000,000" data-calc="balance">
+            </label>
+            <label>All-in cost (% a year)
+              <input type="number" inputmode="decimal" min="0" max="20" step="0.05" value="2" data-calc="fee">
+            </label>
+            <label>Years ahead
+              <input type="number" inputmode="numeric" min="1" max="50" step="1" value="20" data-calc="years">
+            </label>
+            <fieldset>
+              <legend>Benchmark to compare against</legend>
+              <div class="bm" data-show="us">
+                <button type="button" data-calc-benchmark="sp"><b>S&amp;P 500</b><small>U.S. large companies</small></button>
+                <button type="button" data-calc-benchmark="qqq"><b>NASDAQ-100</b><small>QQQ · growth and tech</small></button>
+                <button type="button" data-calc-benchmark="bal"><b>60/40 portfolio</b><small>60% stocks, 40% bonds</small></button>
+                <button type="button" data-calc-benchmark="cash"><b>Cash</b><small>Money market fund</small></button>
+              </div>
+              <div class="bm" data-show="ca">
+                <button type="button" data-calc-benchmark="tsx"><b>S&amp;P/TSX</b><small>Canadian companies</small></button>
+                <button type="button" data-calc-benchmark="sp"><b>S&amp;P 500</b><small>U.S. large companies, in CAD</small></button>
+                <button type="button" data-calc-benchmark="bal"><b>60/40 portfolio</b><small>60% stocks, 40% bonds</small></button>
+                <button type="button" data-calc-benchmark="cash"><b>Cash</b><small>High-interest savings ETF</small></button>
+              </div>
+              <p class="bm-note" data-calc-out="benchmark-note"></p>
+            </fieldset>
+            <fieldset>
+              <legend>Return assumption</legend>
+              <div class="bm">
+                <button type="button" data-calc-mode="historical"><b>Historical</b><small>Long-run average returns</small></button>
+                <button type="button" data-calc-mode="conservative"><b>Conservative</b><small>Lower, forward-looking</small></button>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+        <div class="panel" aria-live="polite">
+          <span class="eyebrow" style="font-size:11px;letter-spacing:.18em;margin-bottom:12px">Your estimate</span>
+          <div class="row"><span>Fees this year</span><strong data-calc-out="fee-this-year">–</strong></div>
+          <div class="row"><span>Value at your cost</span><strong data-calc-out="value-at-fee">–</strong></div>
+          <div class="row"><span>Value in <span data-calc-out="benchmark-label"></span> at <span data-calc-out="benchmark-fee"></span></span><strong data-calc-out="value-at-low-cost">–</strong></div>
+          <div class="total"><span>Cost of your fees</span><span class="big" data-calc-out="gap">–</span></div>
+          <p class="fine" style="text-align:right"><span data-calc-out="gap-today">–</span> in today's dollars</p>
+          <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span> (<span data-calc-out="return-basis"></span>), the same return on your portfolio before its fees, no further deposits, and <span data-calc-out="inflation"></span> inflation for today's dollars. Past returns do not guarantee future results. This shows cost only. Whether your advisor's investing beat its benchmark takes a full review.</p>
+          <a class="btn btn-navy" href="#fees" style="margin-top:16px;text-align:center">See the other half: book a review</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="wrap" style="padding-top:96px;padding-bottom:40px">
     <div class="two">
       <div class="stack">
@@ -345,63 +406,6 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
       </div>
       <div class="skills-total"><span>Total effect of these decisions, before fees</span><span class="neg" style="white-space:nowrap">−$620K</span></div>
       <p class="fine" style="margin-top:8px">Illustrative example using hypothetical data. The five figures add up to the performance gap shown above.</p>
-    </div>
-  </section>
-
-  <section id="calculator" class="calc">
-    <div class="wrap pad">
-      <div class="two" style="align-items:start" data-calc-root>
-        <div class="stack">
-          <span class="eyebrow">Free fee calculator</span>
-          <h2 class="serif">What will your fees cost you?</h2>
-          <p class="copy" style="font-size:16px" data-show="us">Enter your account value and your all-in cost: your advisory fee plus the expense ratios of your funds. Your statement's fee disclosure and fund fact sheets have the numbers.</p>
-          <p class="copy" style="font-size:16px" data-show="ca">Enter your account value and your all-in cost, including the fees inside your funds and GST/HST on advisory fees. Your annual Report on Charges and Fund Facts have the numbers.</p>
-          <form onsubmit="return false">
-            <label><span>Account value (<span data-calc-out="currency">US$</span>)</span>
-              <input type="text" inputmode="numeric" autocomplete="off" value="1,000,000" data-calc="balance">
-            </label>
-            <label>All-in cost (% a year)
-              <input type="number" inputmode="decimal" min="0" max="20" step="0.05" value="2" data-calc="fee">
-            </label>
-            <label>Years ahead
-              <input type="number" inputmode="numeric" min="1" max="50" step="1" value="20" data-calc="years">
-            </label>
-            <fieldset>
-              <legend>Benchmark to compare against</legend>
-              <div class="bm" data-show="us">
-                <button type="button" data-calc-benchmark="sp"><b>S&amp;P 500</b><small>U.S. large companies</small></button>
-                <button type="button" data-calc-benchmark="qqq"><b>NASDAQ-100</b><small>QQQ · growth and tech</small></button>
-                <button type="button" data-calc-benchmark="bal"><b>60/40 portfolio</b><small>60% stocks, 40% bonds</small></button>
-                <button type="button" data-calc-benchmark="cash"><b>Cash</b><small>Money market fund</small></button>
-              </div>
-              <div class="bm" data-show="ca">
-                <button type="button" data-calc-benchmark="tsx"><b>S&amp;P/TSX</b><small>Canadian companies</small></button>
-                <button type="button" data-calc-benchmark="sp"><b>S&amp;P 500</b><small>U.S. large companies, in CAD</small></button>
-                <button type="button" data-calc-benchmark="bal"><b>60/40 portfolio</b><small>60% stocks, 40% bonds</small></button>
-                <button type="button" data-calc-benchmark="cash"><b>Cash</b><small>High-interest savings ETF</small></button>
-              </div>
-              <p class="bm-note" data-calc-out="benchmark-note"></p>
-            </fieldset>
-            <fieldset>
-              <legend>Return assumption</legend>
-              <div class="bm">
-                <button type="button" data-calc-mode="historical"><b>Historical</b><small>Long-run average returns</small></button>
-                <button type="button" data-calc-mode="conservative"><b>Conservative</b><small>Lower, forward-looking</small></button>
-              </div>
-            </fieldset>
-          </form>
-        </div>
-        <div class="panel" aria-live="polite">
-          <span class="eyebrow" style="font-size:11px;letter-spacing:.18em;margin-bottom:12px">Your estimate</span>
-          <div class="row"><span>Fees this year</span><strong data-calc-out="fee-this-year">–</strong></div>
-          <div class="row"><span>Value at your cost</span><strong data-calc-out="value-at-fee">–</strong></div>
-          <div class="row"><span>Value in <span data-calc-out="benchmark-label"></span> at <span data-calc-out="benchmark-fee"></span></span><strong data-calc-out="value-at-low-cost">–</strong></div>
-          <div class="total"><span>Cost of your fees</span><span class="big" data-calc-out="gap">–</span></div>
-          <p class="fine" style="text-align:right"><span data-calc-out="gap-today">–</span> in today's dollars</p>
-          <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span> (<span data-calc-out="return-basis"></span>), the same return on your portfolio before its fees, no further deposits, and <span data-calc-out="inflation"></span> inflation for today's dollars. Past returns do not guarantee future results. This shows cost only. Whether your advisor's investing beat its benchmark takes a full review.</p>
-          <a class="btn btn-navy" href="#fees" style="margin-top:16px;text-align:center">See the other half: book a review</a>
-        </div>
-      </div>
     </div>
   </section>
 
