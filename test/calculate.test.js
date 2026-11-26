@@ -92,3 +92,43 @@ test('higher assumed return makes the cost of fees larger', () => {
   const hi = calc.calculate({ balance: 1e6, feePct: 2, years: 20, benchmark: { ret: 0.10, fee: 0.0003 } });
   assert.ok(hi.gap > lo.gap);
 });
+
+// ---- Optional past-performance comparison ----
+test('trailing returns match the published 1/3/5/10-year figures', () => {
+  const vfv = calc.defaults.countries.ca.benchmarks.sp;      // VFV MRFP: 12.23, 23.21, 15.83, 14.34
+  const xbal = calc.defaults.countries.ca.benchmarks.bal;    // XBAL MRFP: 13.33, 14.07, 7.95, 7.70
+  [[vfv, [12.23, 23.21, 15.83, 14.34]], [xbal, [13.33, 14.07, 7.95, 7.70]]].forEach(([b, want]) => {
+    [1, 3, 5, 10].forEach((n, i) => near(calc.trailing(b, n) * 100, want[i], 0.02));
+  });
+});
+
+test('blank or invalid past return means no comparison', () => {
+  for (const v of ['', '  ', 'abc', null, undefined]) {
+    assert.equal(calc.comparePast({ pastReturnPct: v, pastYears: 5, feePct: 2, benchmark: sp, balance: 1e6, years: 20 }), null);
+  }
+});
+
+test('gap splits into fees and investing, and adds up', () => {
+  const p = calc.comparePast({ pastReturnPct: '7', pastYears: 5, pastBasis: 'after', feePct: 2, benchmark: { ...sp, ret: 0.10 }, balance: 1e6, years: 20 });
+  near(p.benchNet * 100, 14.41, 0.02);
+  near(p.totalGap, p.feeGap + p.investingGap, 1e-12);
+  assert.ok(p.investingGap > 0 && p.feeGap > 0 && !p.beat);
+  // Costs more than fees alone, because the investing gap continues.
+  const feesOnly = calc.calculate({ balance: 1e6, feePct: 2, years: 20, benchmark: { ret: 0.10, fee: sp.fee } }).gap;
+  assert.ok(p.cost > feesOnly);
+});
+
+test('before-fee input is converted, and beating the benchmark is reported', () => {
+  const p = calc.comparePast({ pastReturnPct: '17', pastYears: 5, pastBasis: 'before', feePct: 1, benchmark: { ...sp, ret: 0.10 }, balance: 1e6, years: 20 });
+  near(p.userNet, 1.17 * 0.99 - 1, 1e-12);
+  assert.ok(p.beat);
+});
+
+test('with no investing gap, the cost equals the fees-only result', () => {
+  const b = { ...sp, ret: 0.10 };
+  const bench = calc.trailing(b, 5);
+  const gross = (1 + bench) / (1 - sp.fee) - 1;
+  const p = calc.comparePast({ pastReturnPct: String(((1 + gross) * 0.98 - 1) * 100), pastYears: 5, feePct: 2, benchmark: b, balance: 1e6, years: 20 });
+  const feesOnly = calc.calculate({ balance: 1e6, feePct: 2, years: 20, benchmark: { ret: 0.10, fee: sp.fee } }).gap;
+  near(p.cost, feesOnly, 1);
+});

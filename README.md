@@ -189,3 +189,20 @@ To try the page: open `demo/index.html` in a browser.
 
 For education only. Not investment advice. Results are estimates based on the
 assumptions above.
+
+## Past-performance comparison (optional step)
+
+Visitors can enter their portfolio's annualized return over 1, 3, 5 or 10 years. The calculator compares it with the chosen benchmark over the same calendar years, splits the gap into fees and investing, and projects the cost forward assuming the investing gap continues. Leave the box blank and the calculator shows fees only.
+
+Benchmark data lives in `src/fee-calculator.js` as `past:` arrays of calendar-year total returns (2016 to `PAST_END`), in percent. **Update once a year**, after annual reports for the year just ended are out: add the new year at the end of each array, drop the oldest, and bump `PAST_END`. Then run `npm test`; the trailing-return test checks two series against their published figures, so update those expected values too.
+
+| Country | Benchmark | Series | Source |
+|---|---|---|---|
+| US | S&P 500 | VOO | investmentvisual.com/etfs/voo/returns |
+| US | NASDAQ-100 | QQQ | financialregulationcourses.com (QQQ total returns by year) |
+| US | 60/40 | VBIAX | Vanguard fact sheet (Admiral Shares) |
+| US | Cash | VMFXX | Vanguard investment profile |
+| Canada | S&P/TSX | XIC | BlackRock ETF Facts and fact sheet |
+| Canada | S&P 500 (CAD) | VFV | Vanguard annual MRFP, Dec 31, 2025 |
+| Canada | 60/40 | XBAL | BlackRock annual MRFP, Dec 31, 2025 |
+| Canada | Cash | FTSE Canada 91 Day T-Bill Index, less the ETF fee | Leith Wheeler Money Market Fund page |

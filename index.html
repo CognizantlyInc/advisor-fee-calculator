@@ -122,6 +122,29 @@ html{scroll-padding-top:12px}
 .calc .panel{background:#fff;color:var(--ink);border:0}
 .calc .panel .eyebrow{color:var(--muted)}
 .calc .total .big{font-size:34px;color:var(--red)}
+.bm4{grid-template-columns:repeat(4,minmax(0,1fr))}.bm4 button{min-height:48px}
+.past-in{border:1px solid #5c6b7a;background:var(--navy2)}
+.past-in>summary{cursor:pointer;list-style:none;padding:16px 18px;color:#fff}
+.past-in>summary::-webkit-details-marker{display:none}
+.past-in>summary b{display:block;font-size:15px}.past-in>summary b::before{content:"+ ";color:var(--aqua)}
+.past-in[open]>summary b::before{content:"− "}
+.past-in>summary small{display:block;font-size:12px;margin-top:4px;color:var(--mist)}
+.past-body{display:flex;flex-direction:column;gap:18px;padding:4px 18px 18px}
+.past-body .bm button{background:var(--navy)}
+.past-body .bm button.is-selected{background:var(--aqua)}
+.past-help{font-size:13px;line-height:1.6;color:var(--mist)}
+.past-help summary{cursor:pointer;color:var(--aqua)}
+.past-help p{margin:8px 0 0}
+.past-clear{align-self:flex-start;background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--mist);text-decoration:underline;cursor:pointer}
+.past-out{margin-top:24px;padding-top:20px;border-top:2px solid var(--navy)}
+.past-out .row{font-size:15px;padding:10px 0}
+.past-out .gap-row{font-weight:600}
+.past-out .sub{font-size:13px;color:var(--muted);padding:6px 0 6px 14px;border-bottom:0}
+.past-out .verdict{margin:12px 0 0;font-size:14px;line-height:1.55;color:var(--ink)}
+.past-out .check{display:none;margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--red)}
+[data-calc-past-check="yes"] .past-out .check{display:block}
+[data-calc-past-beat="yes"] .past-out .verdict{color:#2f6b57}
+[data-calc-past-beat="yes"] .past-out .big{color:#2f6b57}
 .fine{font-size:13px;line-height:1.6;color:var(--muted)}
 
 /* fees */
@@ -293,6 +316,37 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
                 <button type="button" data-calc-mode="conservative"><b>Conservative</b><small>Lower, forward-looking</small></button>
               </div>
             </fieldset>
+            <details class="past-in">
+              <summary><b>Add your portfolio's past return</b><small>Optional. Shows the cost of underperformance as well as fees.</small></summary>
+              <div class="past-body">
+                <label>Your annualized return (%)
+                  <input type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 6.5" data-calc="past-return">
+                </label>
+                <fieldset>
+                  <legend>Over the last</legend>
+                  <div class="bm bm4">
+                    <button type="button" data-calc-period="1"><b>1 year</b></button>
+                    <button type="button" data-calc-period="3"><b>3 years</b></button>
+                    <button type="button" data-calc-period="5"><b>5 years</b></button>
+                    <button type="button" data-calc-period="10"><b>10 years</b></button>
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>That return is</legend>
+                  <div class="bm">
+                    <button type="button" data-calc-basis="after"><b>After fees</b><small>Most statements</small></button>
+                    <button type="button" data-calc-basis="before"><b>Before fees</b></button>
+                  </div>
+                </fieldset>
+                <details class="past-help">
+                  <summary>Where do I find this?</summary>
+                  <p data-show="us">Look for the performance page of your statement or online account. It's usually labeled "annualized return," "average annual return" or "time-weighted return," with 1-, 3-, 5- or 10-year figures. Use the figure for the whole account.</p>
+                  <p data-show="ca">Your dealer must send an annual investment performance report. It shows your 1-, 3-, 5- and 10-year annualized returns, after fees. Those are money-weighted, which differs a little from the benchmark's figure if you made large deposits or withdrawals.</p>
+                  <p>Returns are measured to December 31, so use your statement for the year ending December 31 if you can.</p>
+                </details>
+                <button type="button" class="past-clear" data-calc-past-clear>I don't have this or I'm not sure</button>
+              </div>
+            </details>
           </form>
         </div>
         <div class="panel" aria-live="polite">
@@ -302,8 +356,21 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
           <div class="row"><span>Value in <span data-calc-out="benchmark-label"></span> at <span data-calc-out="benchmark-fee"></span></span><strong data-calc-out="value-at-low-cost">–</strong></div>
           <div class="total"><span>Cost of your fees</span><span class="big" data-calc-out="gap">–</span></div>
           <p class="fine" style="text-align:right"><span data-calc-out="gap-today">–</span> in today's dollars</p>
-          <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span> (<span data-calc-out="return-basis"></span>), the same return on your portfolio before its fees, no further deposits, and <span data-calc-out="inflation"></span> inflation for today's dollars. Past returns do not guarantee future results. This shows cost only. Whether your advisor's investing beat its benchmark takes a full review.</p>
-          <a class="btn btn-navy" href="#fees" style="margin-top:16px;text-align:center">See the other half: book a review</a>
+          <div class="past-out" data-calc-past hidden>
+            <span class="eyebrow" style="font-size:11px;letter-spacing:.18em">Your last <span data-calc-out="past-years">5</span> years · <span data-calc-out="past-period"></span></span>
+            <div class="row"><span><span data-calc-out="benchmark-name"></span> benchmark, after its fee</span><strong><span data-calc-out="past-bench">–</span> / yr</strong></div>
+            <div class="row"><span>Your portfolio, after fees</span><strong><span data-calc-out="past-user">–</span> / yr</strong></div>
+            <div class="row gap-row"><span>Gap</span><strong><span data-calc-out="past-gap">–</span> / yr</strong></div>
+            <div class="row sub"><span>From fees</span><span data-calc-out="past-fee-gap">–</span></div>
+            <div class="row sub"><span>From the investing</span><span data-calc-out="past-invest-gap">–</span></div>
+            <p class="verdict" data-calc-out="past-verdict"></p>
+            <p class="check">That gap is unusually large. Check whether your figure is before or after fees, and that the benchmark matches your mix.</p>
+            <div class="total"><span data-calc-out="past-cost-label">Cost of fees and investing gap</span><span class="big" data-calc-out="past-cost">–</span></div>
+            <p class="fine" style="text-align:right">Over <span data-calc-out="years"></span> years · <span data-calc-out="past-cost-today">–</span> in today's dollars</p>
+            <p class="fine" style="margin-top:12px">Assumes your investing gap continues at the same rate. Benchmark returns: <span data-calc-out="past-source"></span>, calendar years, total return after the fund's own fee.</p>
+          </div>
+          <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span> (<span data-calc-out="return-basis"></span>), no further deposits, and <span data-calc-out="inflation"></span> inflation for today's dollars. Past returns do not guarantee future results.<span data-calc-past-none> This shows fees only. Add your past return above to include the investing gap.</span></p>
+          <a class="btn btn-navy" href="#fees" style="margin-top:16px;text-align:center">Find out why: book a review</a>
         </div>
       </div>
     </div>

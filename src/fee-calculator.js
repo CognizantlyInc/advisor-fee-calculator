@@ -22,8 +22,15 @@
     conservative: { label: 'conservative estimate', inflation: 0.02 }
   };
 
+  // Past returns: calendar-year total returns, 2016 through PAST_END, in %.
+  // pastNet: true = already after the ETF's own fee (ETF/fund NAV returns);
+  // false = an index, so the low-cost fee is taken off each year.
+  // Update once a year after the annual reports come out (see README).
+  var PAST_END = 2025;
+
   var DEFAULTS = {
     inflation: 0.02,
+    pastEnd: PAST_END,
     defaultMode: 'historical',
     modes: MODES,
     defaultCountry: 'us',
@@ -32,20 +39,28 @@
         currency: 'US$',
         defaultBenchmark: 'sp',
         benchmarks: {
-          sp:   { name: 'S&P 500',         label: 'an S&P 500 index ETF',     ret: 0.07,  hist: 0.100, histPeriod: '1928–2025', fee: 0.0003, note: 'For all-equity mandates focused on large U.S. companies.' },
-          qqq:  { name: 'NASDAQ-100',      label: 'a NASDAQ-100 ETF (QQQ)',   ret: 0.08,  hist: 0.1425, histPeriod: '1985–2024', fee: 0.0020, note: 'For growth mandates concentrated in U.S. technology. Higher expected return, with larger swings.' },
-          bal:  { name: '60/40 portfolio', label: 'a 60/40 balanced index fund', ret: 0.055, hist: 0.078, histPeriod: '1928–2025', fee: 0.0010, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
-          cash: { name: 'Cash',            label: 'a money market fund',      ret: 0.03,  hist: 0.034, histPeriod: '1928–2025', fee: 0.0010, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
+          sp:   { name: 'S&P 500',         label: 'an S&P 500 index ETF',     ret: 0.07,  hist: 0.100, histPeriod: '1928–2025', fee: 0.0003, note: 'For all-equity mandates focused on large U.S. companies.',
+                  past: [12.17, 21.77, -4.50, 31.37, 18.32, 28.79, -18.17, 26.32, 24.98, 17.82], pastNet: true, pastSource: 'VOO (Vanguard S&P 500 ETF)' },
+          qqq:  { name: 'NASDAQ-100',      label: 'a NASDAQ-100 ETF (QQQ)',   ret: 0.08,  hist: 0.1425, histPeriod: '1985–2024', fee: 0.0020, note: 'For growth mandates concentrated in U.S. technology. Higher expected return, with larger swings.',
+                  past: [7.1, 32.7, -0.1, 39.0, 48.6, 27.4, -32.6, 54.9, 25.6, 20.8], pastNet: true, pastSource: 'QQQ (Invesco QQQ Trust)' },
+          bal:  { name: '60/40 portfolio', label: 'a 60/40 balanced index fund', ret: 0.055, hist: 0.078, histPeriod: '1928–2025', fee: 0.0010, note: 'For balanced or more risk-averse mandates with a fixed income allocation.',
+                  past: [8.77, 13.89, -2.86, 21.79, 16.40, 14.22, -16.90, 17.58, 14.59, 13.58], pastNet: true, pastSource: 'VBIAX (Vanguard Balanced Index, 60/40)' },
+          cash: { name: 'Cash',            label: 'a money market fund',      ret: 0.03,  hist: 0.034, histPeriod: '1928–2025', fee: 0.0010, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.',
+                  past: [0.30, 0.81, 1.78, 2.14, 0.45, 0.01, 1.55, 5.09, 5.23, 4.22], pastNet: true, pastSource: 'VMFXX (Vanguard Federal Money Market)' }
         }
       },
       ca: {
         currency: 'C$',
         defaultBenchmark: 'tsx',
         benchmarks: {
-          tsx:  { name: 'S&P/TSX Composite', label: 'a TSX index ETF',              ret: 0.065, hist: 0.105, histPeriod: '1976–2025', fee: 0.0006, note: 'For Canadian equity mandates.' },
-          sp:   { name: 'S&P 500',           label: 'an S&P 500 index ETF in CAD',  ret: 0.07,  hist: 0.100, histPeriod: '1928–2025, in US$', fee: 0.0009, note: 'For all-equity mandates focused on large U.S. companies, held in Canadian dollars.' },
-          bal:  { name: '60/40 portfolio',   label: 'a 60/40 balanced ETF',          ret: 0.055, hist: 0.089, histPeriod: '1976–2025', fee: 0.0024, note: 'For balanced or more risk-averse mandates with a fixed income allocation.' },
-          cash: { name: 'Cash',              label: 'a high-interest savings ETF',   ret: 0.03,  hist: 0.047, histPeriod: '1950–2025', fee: 0.0011, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.' }
+          tsx:  { name: 'S&P/TSX Composite', label: 'a TSX index ETF',              ret: 0.065, hist: 0.105, histPeriod: '1976–2025', fee: 0.0006, note: 'For Canadian equity mandates.',
+                  past: [21.0, 9.1, -8.8, 22.9, 5.6, 25.06, -5.85, 11.67, 21.53, 31.59], pastNet: true, pastSource: 'XIC (iShares Core S&P/TSX Capped Composite)' },
+          sp:   { name: 'S&P 500',           label: 'an S&P 500 index ETF in CAD',  ret: 0.07,  hist: 0.100, histPeriod: '1928–2025, in US$', fee: 0.0009, note: 'For all-equity mandates focused on large U.S. companies, held in Canadian dollars.',
+                  past: [8.46, 13.61, 3.35, 24.49, 15.58, 27.64, -12.69, 23.25, 35.24, 12.23], pastNet: true, pastSource: 'VFV (Vanguard S&P 500 Index ETF, CAD)' },
+          bal:  { name: '60/40 portfolio',   label: 'a 60/40 balanced ETF',          ret: 0.055, hist: 0.089, histPeriod: '1976–2025', fee: 0.0024, note: 'For balanced or more risk-averse mandates with a fixed income allocation.',
+                  past: [9.30, 5.50, -2.51, 15.19, 10.59, 11.06, -11.08, 12.78, 16.13, 13.33], pastNet: true, pastSource: 'XBAL (iShares Core Balanced ETF Portfolio)' },
+          cash: { name: 'Cash',              label: 'a high-interest savings ETF',   ret: 0.03,  hist: 0.047, histPeriod: '1950–2025', fee: 0.0011, note: 'For capital-preservation mandates. Shows what fees cost against the safest option.',
+                  past: [0.5, 0.6, 1.4, 1.6, 0.9, 0.2, 1.8, 4.7, 4.9, 2.8], pastNet: false, pastSource: 'FTSE Canada 91 Day T-Bill Index, less the ETF fee' }
         }
       }
     }
@@ -78,6 +93,62 @@
       feesPaid: feesPaid,
       gap: gap,
       gapTodayDollars: gap / Math.pow(1 + inflation, years)
+    };
+  }
+
+  // Annualized return over the last n calendar years of a benchmark.
+  function trailing(bm, n) {
+    var rs = (bm.past || []).slice(-n);
+    if (rs.length < n) return null;
+    var p = 1;
+    for (var i = 0; i < rs.length; i++) {
+      var r = rs[i] / 100;
+      if (!bm.pastNet) r = (1 + r) * (1 - num(bm.fee)) - 1;
+      p *= 1 + r;
+    }
+    return Math.pow(p, 1 / n) - 1;
+  }
+
+  // Optional: compares the visitor's own past return with the benchmark over
+  // the same period, splits the gap into fees and investing, and projects
+  // the cost forward assuming that investing gap continues.
+  //   input.pastReturnPct  e.g. "6.5" (annualized)
+  //   input.pastYears      1, 3, 5 or 10
+  //   input.pastBasis      'after' (after all fees, the default) or 'before'
+  function comparePast(input) {
+    var raw = input.pastReturnPct;
+    if (raw == null || String(raw).trim() === '' || !isFinite(parseFloat(String(raw).replace(/[%\s]/g, '')))) return null;
+    var fee = clamp(num(input.feePct) / 100, 0, 0.2);
+    var lowFee = num(input.benchmark.fee);
+    var n = [1, 3, 5, 10].indexOf(Math.round(num(input.pastYears))) > -1 ? Math.round(num(input.pastYears)) : 5;
+    var benchNet = trailing(input.benchmark, n);
+    if (benchNet == null) return null;
+    var r = clamp(num(raw) / 100, -0.9, 1);
+    var before = input.pastBasis === 'before';
+    var userNet = before ? (1 + r) * (1 - fee) - 1 : r;
+    var userGross = before ? r : (1 + r) / (1 - fee) - 1;
+    var benchGross = (1 + benchNet) / (1 - lowFee) - 1;
+    var totalGap = benchNet - userNet;          // + = you trailed
+    var investingGap = benchGross - userGross;  // + = investing trailed, before fees
+    var feeGap = totalGap - investingGap;
+
+    // Forward: same as calculate(), with the investing gap carried forward.
+    var balance = Math.max(0, num(input.balance));
+    var years = Math.round(clamp(num(input.years), 1, 50));
+    var ret = num(input.benchmark.ret);
+    var inflation = input.inflation == null || input.inflation === '' ? DEFAULTS.inflation : num(input.inflation);
+    var growth = Math.max(-0.99, ret - investingGap);
+    var valueWithGap = balance * Math.pow((1 + growth) * (1 - fee), years);
+    var valueAtLowCost = balance * Math.pow((1 + ret) * (1 - lowFee), years);
+    var cost = valueAtLowCost - valueWithGap;   // can be negative if you beat it
+    return {
+      years: n, end: PAST_END, start: PAST_END - n + 1,
+      benchNet: benchNet, benchGross: benchGross, userNet: userNet, userGross: userGross,
+      totalGap: totalGap, investingGap: investingGap, feeGap: feeGap,
+      beat: investingGap < 0,
+      checkInput: Math.abs(investingGap) > 0.08,
+      valueWithGap: valueWithGap, valueAtLowCost: valueAtLowCost,
+      cost: cost, costTodayDollars: cost / Math.pow(1 + inflation, years)
     };
   }
 
@@ -134,7 +205,8 @@
       hist: attr('data-hist-return', base.hist, true),
       histPeriod: attr('data-hist-period', base.histPeriod || ''),
       fee: attr('data-fee', base.fee, true),
-      note: attr('data-note', base.note || '')
+      note: attr('data-note', base.note || ''),
+      past: base.past, pastNet: base.pastNet, pastSource: base.pastSource
     };
   }
 
@@ -153,8 +225,14 @@
     var inputs = {
       balance: q('[data-calc="balance"]'),
       fee: q('[data-calc="fee"]'),
-      years: q('[data-calc="years"]')
+      years: q('[data-calc="years"]'),
+      pastReturn: q('[data-calc="past-return"]')
     };
+    var pastYears = 5, pastBasis = 'after';
+    var periodButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-period]'));
+    var basisButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-basis]'));
+    var pastBox = q('[data-calc-past]');
+    var pastNone = q('[data-calc-past-none]');
     var allButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-benchmark]'));
     var country = currentCountry();
     var selected = {}; // per country
@@ -185,7 +263,7 @@
       var btn = buttonsFor(country).filter(function (b) { return b.getAttribute('data-calc-benchmark') === id; })[0];
       if (btn) return readBenchmark(btn, country);
       var d = countryConfig(country).benchmarks[id] || countryConfig(country).benchmarks[countryConfig(country).defaultBenchmark];
-      return { id: id, name: d.name, label: d.label, ret: d.ret, hist: d.hist, histPeriod: d.histPeriod, fee: d.fee, note: d.note };
+      return { id: id, name: d.name, label: d.label, ret: d.ret, hist: d.hist, histPeriod: d.histPeriod, fee: d.fee, note: d.note, past: d.past, pastNet: d.pastNet, pastSource: d.pastSource };
     }
 
     function set(name, text) {
@@ -232,6 +310,46 @@
       set('benchmark-fee', pct(bm.fee));
       set('benchmark-return', pct(ret));
       set('benchmark-note', bm.note);
+      // Optional past-performance comparison
+      var p = comparePast({
+        pastReturnPct: inputs.pastReturn ? inputs.pastReturn.value : '',
+        pastYears: pastYears, pastBasis: pastBasis,
+        feePct: inputs.fee ? inputs.fee.value : 0,
+        balance: inputs.balance ? inputs.balance.value : 0,
+        years: inputs.years ? inputs.years.value : 20,
+        benchmark: { ret: ret, fee: bm.fee, past: bm.past, pastNet: bm.pastNet },
+        inflation: infl
+      });
+      periodButtons.forEach(function (b) {
+        var on = num(b.getAttribute('data-calc-period')) === pastYears;
+        b.classList.toggle('is-selected', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      basisButtons.forEach(function (b) {
+        var on = b.getAttribute('data-calc-basis') === pastBasis;
+        b.classList.toggle('is-selected', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      if (pastBox) pastBox.hidden = !p;
+      if (pastNone) pastNone.hidden = !!p;
+      root.setAttribute('data-calc-past-state', p ? 'on' : 'off');
+      if (p) {
+        var sign = function (x) { return (x < 0 ? '−' : '') + pct(Math.abs(x)); };
+        set('past-period', p.years === 1 ? 'the year ' + p.end : p.start + '–' + p.end);
+        set('past-years', String(p.years));
+        set('past-bench', pct(p.benchNet));
+        set('past-user', pct(p.userNet));
+        set('past-gap', sign(p.totalGap));
+        set('past-fee-gap', sign(p.feeGap));
+        set('past-invest-gap', sign(p.investingGap));
+        set('past-source', bm.pastSource || bm.label);
+        set('past-verdict', p.beat
+          ? 'Before fees, your portfolio beat the benchmark by ' + pct(-p.investingGap) + ' a year. Fees took ' + pct(p.feeGap) + ' a year of that.'
+          : 'Your portfolio trailed the benchmark by ' + pct(p.totalGap) + ' a year: ' + pct(Math.max(0, p.feeGap)) + ' from fees and ' + pct(p.investingGap) + ' from the investing itself.');
+        set('past-cost-label', p.cost >= 0 ? 'Cost of fees and investing gap' : 'Value added after fees');
+        set('past-cost', money(Math.abs(p.cost)));
+        set('past-cost-today', money(Math.abs(p.costTodayDollars)));
+        root.setAttribute('data-calc-past-beat', p.beat ? 'yes' : 'no');
+        root.setAttribute('data-calc-past-check', p.checkInput ? 'yes' : 'no');
+      }
       root.setAttribute('data-calc-state', r.gap > 0 ? 'has-result' : 'empty');
       if (typeof global.CustomEvent === 'function') {
         root.dispatchEvent(new CustomEvent('feecalc:update', { detail: { result: r, benchmark: bm.id, country: country, mode: mode }, bubbles: true }));
@@ -257,6 +375,20 @@
       if (b.tagName === 'BUTTON' && !b.getAttribute('type')) b.setAttribute('type', 'button');
       b.addEventListener('click', function (e) { e.preventDefault(); mode = b.getAttribute('data-calc-mode'); update(); });
     });
+    periodButtons.forEach(function (b) {
+      b.addEventListener('click', function (e) { e.preventDefault(); pastYears = num(b.getAttribute('data-calc-period')); update(); });
+    });
+    basisButtons.forEach(function (b) {
+      b.addEventListener('click', function (e) { e.preventDefault(); pastBasis = b.getAttribute('data-calc-basis'); update(); });
+    });
+    var clearPast = q('[data-calc-past-clear]');
+    if (clearPast) clearPast.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (inputs.pastReturn) inputs.pastReturn.value = '';
+      var d = clearPast.closest ? clearPast.closest('details') : null;
+      if (d) d.open = false;
+      update();
+    });
     document.addEventListener('country:change', function () { country = currentCountry(); update(); });
     update();
   }
@@ -267,7 +399,7 @@
   }
 
   var api = {
-    calculate: calculate, init: init, initAll: initAll, defaults: DEFAULTS,
+    calculate: calculate, comparePast: comparePast, trailing: trailing, init: init, initAll: initAll, defaults: DEFAULTS,
     format: { money: money, pct: pct }
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
