@@ -152,6 +152,61 @@
     };
   }
 
+  // Year-by-year values for the chart: low-cost benchmark, your cost, and
+  // (optional) your cost with the investing gap continuing.
+  function series(input) {
+    var balance = Math.max(0, num(input.balance));
+    var fee = clamp(num(input.feePct) / 100, 0, 0.2);
+    var years = Math.round(clamp(num(input.years), 1, 50));
+    var ret = num(input.benchmark.ret);
+    var lowFee = num(input.benchmark.fee);
+    var gap = input.investingGap == null ? null : num(input.investingGap);
+    var out = { years: years, low: [], mine: [], withGap: gap == null ? null : [] };
+    for (var i = 0; i <= years; i++) {
+      out.low.push(balance * Math.pow((1 + ret) * (1 - lowFee), i));
+      out.mine.push(balance * Math.pow((1 + ret) * (1 - fee), i));
+      if (gap != null) out.withGap.push(balance * Math.pow((1 + Math.max(-0.99, ret - gap)) * (1 - fee), i));
+    }
+    return out;
+  }
+
+  function shortMoney(n) {
+    var a = Math.abs(n);
+    if (a >= 1e9) return '$' + (n / 1e9).toFixed(a >= 1e10 ? 0 : 1).replace(/\.0$/, '') + 'B';
+    if (a >= 1e6) return '$' + (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
+    if (a >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+    return '$' + Math.round(n);
+  }
+
+  // Builds the chart as an SVG string (no libraries).
+  function chartSvg(sr) {
+    var W = 560, H = 250, L = 52, R = 12, T = 12, B = 30;
+    var all = sr.low.concat(sr.mine, sr.withGap || []);
+    var max = Math.max.apply(null, all) || 1;
+    var step = Math.pow(10, Math.floor(Math.log10(max / 4)));
+    var nice = [1, 2, 2.5, 5, 10].map(function (m) { return m * step; }).filter(function (v) { return max / v <= 5; })[0] || step * 10;
+    var top = Math.ceil(max / nice) * nice;
+    var x = function (i) { return L + (W - L - R) * i / sr.years; };
+    var y = function (v) { return T + (H - T - B) * (1 - Math.max(0, v) / top); };
+    var line = function (arr) { return arr.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' '); };
+    var g = '';
+    for (var t = 0; t <= top + 1e-6; t += nice) {
+      g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="#e7e7e3"/>' +
+           '<text x="' + (L - 8) + '" y="' + (y(t) + 4).toFixed(1) + '" text-anchor="end" font-size="11" fill="#6b6b6b">' + shortMoney(t) + '</text>';
+    }
+    var ticks = [0, Math.round(sr.years / 2), sr.years];
+    ticks.forEach(function (i) {
+      g += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="' + (i === 0 ? 'start' : i === sr.years ? 'end' : 'middle') + '" font-size="11" fill="#6b6b6b">' + (i === 0 ? 'Today' : 'Year ' + i) + '</text>';
+    });
+    var lower = sr.withGap || sr.mine;
+    var area = line(sr.low) + ' ' + lower.slice().reverse().map(function (v, k) { var i = sr.years - k; return 'L' + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ') + ' Z';
+    g += '<path d="' + area + '" fill="#b5473a" fill-opacity=".08"/>';
+    g += '<path d="' + line(sr.low) + '" fill="none" stroke="#0c1a2a" stroke-width="2.5"/>';
+    g += '<path d="' + line(sr.mine) + '" fill="none" stroke="#b5473a" stroke-width="2.5"/>';
+    if (sr.withGap) g += '<path d="' + line(sr.withGap) + '" fill="none" stroke="#b5473a" stroke-width="2" stroke-dasharray="5 4"/>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Projected account value over ' + sr.years + ' years">' + g + '</svg>';
+  }
+
   // ---------------------------------------------------------------------------
   // 3. Helpers
   // ---------------------------------------------------------------------------
@@ -232,6 +287,7 @@
     var periodButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-period]'));
     var basisButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-basis]'));
     var pastBox = q('[data-calc-past]');
+    var lastState = null;
     var pastNone = q('[data-calc-past-none]');
     var allButtons = Array.prototype.slice.call(root.querySelectorAll('[data-calc-benchmark]'));
     var country = currentCountry();
@@ -350,6 +406,24 @@
         root.setAttribute('data-calc-past-beat', p.beat ? 'yes' : 'no');
         root.setAttribute('data-calc-past-check', p.checkInput ? 'yes' : 'no');
       }
+      lastState = {
+        country: country, benchmark: bm.id, mode: mode,
+        balance: inputs.balance ? inputs.balance.value : '',
+        fee: inputs.fee ? inputs.fee.value : '',
+        years: inputs.years ? inputs.years.value : '',
+        pastReturn: inputs.pastReturn ? inputs.pastReturn.value : '',
+        pastYears: pastYears, pastBasis: pastBasis
+      };
+      var chart = q('[data-calc-chart]');
+      if (chart) {
+        chart.innerHTML = chartSvg(series({
+          balance: inputs.balance ? inputs.balance.value : 0,
+          feePct: inputs.fee ? inputs.fee.value : 0,
+          years: inputs.years ? inputs.years.value : 20,
+          benchmark: { ret: ret, fee: bm.fee },
+          investingGap: p ? p.investingGap : null
+        }));
+      }
       root.setAttribute('data-calc-state', r.gap > 0 ? 'has-result' : 'empty');
       if (typeof global.CustomEvent === 'function') {
         root.dispatchEvent(new CustomEvent('feecalc:update', { detail: { result: r, benchmark: bm.id, country: country, mode: mode }, bubbles: true }));
@@ -389,6 +463,32 @@
       if (d) d.open = false;
       update();
     });
+    // "Email me my results"
+    var emailForm = q('[data-calc-email]');
+    if (emailForm) emailForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var status = emailForm.querySelector('[data-calc-email-status]');
+      var btn = emailForm.querySelector('button[type="submit"]');
+      var say = function (t, ok) { if (status) { status.textContent = t; status.setAttribute('data-ok', ok ? 'yes' : 'no'); } };
+      var addr = emailForm.querySelector('[name="email"]');
+      if (!addr || !addr.value.trim()) { say('Please enter your email address.', false); return; }
+      var body = {};
+      for (var k in lastState) body[k] = lastState[k];
+      body.email = addr.value.trim();
+      var opt = emailForm.querySelector('[name="optin"]'); body.optIn = !!(opt && opt.checked);
+      var trap = emailForm.querySelector('[name="website"]'); body.website = trap ? trap.value : '';
+      if (btn) btn.disabled = true;
+      say('Sending…', true);
+      fetch(emailForm.getAttribute('action') || '/api/report', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      }).then(function (res) { return res.json().catch(function () { return { ok: false }; }); })
+        .then(function (r) {
+          if (r && r.ok) say('Sent. Check your inbox (and spam folder) in a minute or two.', true);
+          else say((r && r.error) || 'We couldn’t send it just now. Please try again.', false);
+        })
+        .catch(function () { say('We couldn’t send it just now. Please try again.', false); })
+        .then(function () { if (btn) btn.disabled = false; });
+    });
     document.addEventListener('country:change', function () { country = currentCountry(); update(); });
     update();
   }
@@ -399,7 +499,7 @@
   }
 
   var api = {
-    calculate: calculate, comparePast: comparePast, trailing: trailing, init: init, initAll: initAll, defaults: DEFAULTS,
+    calculate: calculate, comparePast: comparePast, trailing: trailing, series: series, chartSvg: chartSvg, init: init, initAll: initAll, defaults: DEFAULTS,
     format: { money: money, pct: pct }
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

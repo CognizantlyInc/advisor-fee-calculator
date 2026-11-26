@@ -106,3 +106,36 @@ test('if email is not set up, the visitor is offered Calendly', async () => {
   const { r } = await enquire({ name: 'A', contact: 'a@example.com' }, await signedInCookie(), { NOTIFY_EMAIL: '' });
   assert.match(r.headers.get('Location'), /error=1/);
 });
+
+// ---- Email me my results ----
+const post = (body, e = {}) => worker.fetch(new Request('https://worththefees.com/api/report', {
+  method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': String(Math.random()) }, body: JSON.stringify(body)
+}), { ASSETS, ...e });
+const good = { email: 'jane@example.com', country: 'us', benchmark: 'sp', mode: 'historical', balance: '1,000,000', fee: '2', years: '20', pastReturn: '7', pastYears: 5, pastBasis: 'after' };
+
+test('report is recomputed on the server and sent through Resend', async () => {
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => { calls.push({ url, body: JSON.parse(init.body) }); return new Response('{}', { status: 200 }); };
+  try {
+    const r = await post(good, { RESEND_API_KEY: 'test' });
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).ok, true);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://api.resend.com/emails');
+    assert.deepEqual(calls[0].body.to, ['jane@example.com']);
+    assert.match(calls[0].body.html, /\$2,195,917/);          // same as the page
+    assert.match(calls[0].body.text, /Your portfolio, after fees: 7% a year/);
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test('bad email, spam trap and missing key are handled', async () => {
+  assert.equal((await post({ ...good, email: 'nope' }, { RESEND_API_KEY: 'x' })).status, 400);
+  assert.equal((await (await post({ ...good, website: 'bot' }, { RESEND_API_KEY: 'x' })).json()).ok, true);
+  assert.equal((await post(good)).status, 503);
+});
+
+test('only POST is accepted', async () => {
+  const r = await worker.fetch(new Request('https://worththefees.com/api/report'), { ASSETS });
+  assert.equal(r.status, 405);
+});

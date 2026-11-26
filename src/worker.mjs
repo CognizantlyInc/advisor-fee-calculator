@@ -10,6 +10,9 @@
  * never sent to a browser that hasn't entered the right code.
  */
 
+import calcModule from './fee-calculator.js';
+
+const calc = calcModule && calcModule.calculate ? calcModule : globalThis.PWSFeeCalc;
 const COOKIE = 'pws_private';
 const MAX_AGE = 60 * 60 * 24 * 30; // remember for 30 days
 
@@ -17,6 +20,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    if (path === '/api/report') return emailReport(request, env);
     const isPrivate = path === '/private' || path.startsWith('/private/');
     if (!isPrivate) return env.ASSETS.fetch(request);
 
@@ -66,6 +70,127 @@ export default {
 };
 
 // ---------------------------------------------------------------------------
+// "Email me my results" (POST /api/report, JSON)
+//
+// The visitor's inputs come in; the numbers are recomputed here with the same
+// calculator code, so the email only ever contains our own figures.
+// Sending uses Resend (resend.com). Needs runtime secret RESEND_API_KEY and a
+// verified sending domain. Optional: REPORT_FROM (default
+// "Worth the Fees <reports@worththefees.com>"), REPORT_REPLY_TO.
+// If NOTIFY_EMAIL is set, Amos also gets a short lead notice.
+// ---------------------------------------------------------------------------
+
+const recent = new Map(); // best-effort limit per IP, per Worker instance
+const LIMIT = 5, WINDOW_MS = 60 * 60 * 1000;
+
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}
+
+export async function emailReport(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Use POST.' }, 405);
+  let d;
+  try { d = await request.json(); } catch (e) { return json({ ok: false, error: 'Bad request.' }, 400); }
+  if (!d || typeof d !== 'object') return json({ ok: false, error: 'Bad request.' }, 400);
+  if (d.website) return json({ ok: true }); // spam trap: pretend it worked
+
+  const email = String(d.email || '').trim();
+  if (email.length > 254 || !/^[^\s@<>,;]+@[^\s@<>,;]+\.[a-z]{2,}$/i.test(email)) {
+    return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const now = Date.now();
+  const hits = (recent.get(ip) || []).filter((t) => now - t < WINDOW_MS);
+  if (hits.length >= LIMIT) return json({ ok: false, error: 'Too many requests. Please try again later.' }, 429);
+  hits.push(now); recent.set(ip, hits);
+
+  const report = buildReport(d);
+  if (!report) return json({ ok: false, error: 'Something was missing. Please check your numbers.' }, 400);
+  if (!env.RESEND_API_KEY) return json({ ok: false, error: 'Email reports are not switched on yet.' }, 503);
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: env.REPORT_FROM || 'Worth the Fees <reports@worththefees.com>',
+      to: [email],
+      reply_to: env.REPORT_REPLY_TO || undefined,
+      subject: 'Your fee report from Worth the Fees',
+      html: report.html,
+      text: report.text
+    })
+  });
+  if (!res.ok) {
+    console.log('Resend failed: ' + res.status + ' ' + (await res.text()).slice(0, 300));
+    return json({ ok: false, error: 'We couldn’t send it just now. Please try again.' }, 502);
+  }
+
+  // Lead notice to Amos (Cloudflare Email Routing). Failures are ignored.
+  await sendEnquiry(env, {
+    name: email,
+    contact: email,
+    message: report.summary + '\r\nInsights opt-in: ' + (d.optIn ? 'YES' : 'no'),
+    when: new Date()
+  }, 'Fee report sent');
+  return json({ ok: true });
+}
+
+export function buildReport(d) {
+  const countries = calc.defaults.countries;
+  const country = countries[d.country] ? d.country : 'us';
+  const cfg = countries[country];
+  const bm = cfg.benchmarks[d.benchmark] || cfg.benchmarks[cfg.defaultBenchmark];
+  const mode = calc.defaults.modes[d.mode] ? d.mode : calc.defaults.defaultMode;
+  const ret = mode === 'historical' && bm.hist ? bm.hist : bm.ret;
+  const infl = calc.defaults.modes[mode].inflation;
+  const input = { balance: d.balance, feePct: d.fee, years: d.years, benchmark: { ret, fee: bm.fee, past: bm.past, pastNet: bm.pastNet }, inflation: infl };
+  const r = calc.calculate(input);
+  if (!(r.balance > 0)) return null;
+  const p = calc.comparePast({ ...input, pastReturnPct: d.pastReturn, pastYears: d.pastYears, pastBasis: d.pastBasis === 'before' ? 'before' : 'after' });
+  const m = calc.format.money, pc = calc.format.pct;
+  const cur = cfg.currency;
+  const sign = (x) => (x < 0 ? '−' : '') + pc(Math.abs(x));
+
+  const rows = [
+    ['Account value (' + cur + ')', m(r.balance)],
+    ['All-in cost', pc(r.feeRate) + ' a year'],
+    ['Years ahead', String(r.years)],
+    ['Benchmark', bm.name + ' (' + bm.label + ' at ' + pc(bm.fee) + ')'],
+    ['Fees this year', m(r.feeThisYear)],
+    ['Value at your cost', m(r.valueAtFee)],
+    ['Value in the low-cost benchmark', m(r.valueAtLowCost)]
+  ];
+  const pastRows = p ? [
+    ['Period', p.years === 1 ? String(p.end) : p.start + '–' + p.end],
+    [bm.name + ' benchmark, after its fee', pc(p.benchNet) + ' a year'],
+    ['Your portfolio, after fees', pc(p.userNet) + ' a year'],
+    ['Gap', sign(p.totalGap) + ' a year (fees ' + sign(p.feeGap) + ', investing ' + sign(p.investingGap) + ')']
+  ] : [];
+  const headline = 'Cost of your fees over ' + r.years + ' years: ' + m(r.gap) + ' (' + m(r.gapTodayDollars) + ' in today’s dollars)';
+  const headline2 = p ? (p.cost >= 0 ? 'Cost of fees and investing gap: ' : 'Value added after fees: ') + m(Math.abs(p.cost)) + ' (' + m(Math.abs(p.costTodayDollars)) + ' in today’s dollars)' : '';
+  const assumptions = 'Assumes ' + pc(ret) + ' a year before fees for ' + bm.label + ' (' + (mode === 'historical' ? 'historical average, ' + bm.histPeriod : 'conservative estimate') + '), no further deposits, and ' + pc(infl) + ' inflation for today’s dollars.' + (p ? ' Assumes your investing gap continues at the same rate.' : '') + ' Past returns do not guarantee future results. This is an estimate for education, not investment advice.';
+
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const table = (rs) => '<table role="presentation" style="width:100%;border-collapse:collapse;font-size:15px">' + rs.map(([k, v]) => '<tr><td style="padding:10px 0;border-bottom:1px solid #e5e5e5;color:#333">' + esc(k) + '</td><td style="padding:10px 0;border-bottom:1px solid #e5e5e5;text-align:right;font-weight:600;color:#1e1e1e">' + esc(v) + '</td></tr>').join('') + '</table>';
+  const html = '<div style="max-width:560px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#1e1e1e">' +
+    '<p style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5e5e5e;margin:0 0 8px">Worth the Fees · Powered by Prof of Wall Street</p>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:400;font-size:28px;margin:0 0 20px">Your fee report</h1>' +
+    table(rows) +
+    '<p style="font-size:18px;font-weight:600;color:#b5473a;margin:20px 0 4px">' + esc(headline) + '</p>' +
+    (p ? '<h2 style="font-family:Georgia,serif;font-weight:400;font-size:20px;margin:28px 0 8px">Your past performance</h2>' + table(pastRows) +
+      '<p style="font-size:18px;font-weight:600;color:' + (p.cost >= 0 ? '#b5473a' : '#2f6b57') + ';margin:20px 0 4px">' + esc(headline2) + '</p>' : '') +
+    '<p style="font-size:12px;line-height:1.6;color:#5e5e5e;margin:24px 0">' + esc(assumptions) + '</p>' +
+    '<p style="font-size:15px;line-height:1.6">This shows what the numbers cost. A full review shows why: how the investing decisions added or lost value, measured against your own Investment Policy Statement.</p>' +
+    '<p style="margin:20px 0"><a href="https://calendly.com/profofwallstreet/15min" style="display:inline-block;background:#0c1a2a;color:#fff;text-decoration:none;padding:14px 22px;font-weight:600">Book a 15-minute call</a></p>' +
+    '<p style="font-size:13px"><a href="https://worththefees.com/#calculator" style="color:#1f55a5">Run the calculator again</a></p>' +
+    '<p style="font-size:11px;color:#8a8a8a;margin-top:28px">You asked us to email this report from worththefees.com. We don’t share your email address.</p></div>';
+  const text = ['Your fee report, Worth the Fees', ''].concat(rows.map(([k, v]) => k + ': ' + v), ['', headline],
+    p ? [''].concat(pastRows.map(([k, v]) => k + ': ' + v), [headline2]) : [],
+    ['', assumptions, '', 'Book a 15-minute call: https://calendly.com/profofwallstreet/15min', 'Run the calculator again: https://worththefees.com/#calculator']).join('\n');
+  const summary = rows.concat(pastRows).map(([k, v]) => k + ': ' + v).join('\r\n') + '\r\n' + headline + (p ? '\r\n' + headline2 : '');
+  return { html, text, summary, result: r, past: p };
+}
 
 // Removes line breaks (blocks email header injection) and trims length.
 function clean(v, max) {
@@ -76,7 +201,7 @@ function clean(v, max) {
 // Needs: the ENQUIRY_EMAIL send_email binding (wrangler.jsonc), Email Routing
 // turned on for worththefees.com, NOTIFY_EMAIL verified as a destination
 // address, and NOTIFY_EMAIL set as a runtime variable. Returns true if sent.
-async function sendEnquiry(env, e) {
+async function sendEnquiry(env, e, subjectPrefix) {
   const to = (env.NOTIFY_EMAIL || '').trim();
   if (!to || !env.ENQUIRY_EMAIL) return false;
   const from = env.ENQUIRY_FROM || 'enquiries@worththefees.com';
@@ -97,7 +222,7 @@ async function sendEnquiry(env, e) {
     'From: "Worth the Fees" <' + from + '>',
     'To: <' + to + '>',
     looksLikeEmail ? 'Reply-To: <' + e.contact + '>' : null,
-    'Subject: Private enquiry: ' + e.name,
+    'Subject: ' + (subjectPrefix || 'Private enquiry') + ': ' + e.name,
     'Date: ' + e.when.toUTCString(),
     'Message-ID: <' + crypto.randomUUID() + '@worththefees.com>',
     'MIME-Version: 1.0',

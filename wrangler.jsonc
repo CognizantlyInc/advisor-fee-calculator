@@ -2,6 +2,7 @@
 // Static files are served directly. Requests under /private go through
 // src/worker.mjs first, which checks the access code (secret:
 // PRIVATE_ACCESS_CODE, set in the Cloudflare dashboard, never in this repo).
+// /api/report emails a visitor their calculator results (secret: RESEND_API_KEY).
 {
   "name": "advisor-fee-calculator",
   "main": "src/worker.mjs",
@@ -18,6 +19,6 @@
   "assets": {
     "directory": "./",
     "binding": "ASSETS",
-    "run_worker_first": ["/private", "/private/*"]
+    "run_worker_first": ["/private", "/private/*", "/api/*"]
   }
 }

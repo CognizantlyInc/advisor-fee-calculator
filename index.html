@@ -122,6 +122,26 @@ html{scroll-padding-top:12px}
 .calc .panel{background:#fff;color:var(--ink);border:0}
 .calc .panel .eyebrow{color:var(--muted)}
 .calc .total .big{font-size:34px;color:var(--red)}
+.email-report{margin-top:24px;padding-top:20px;border-top:1px solid #e5e5e5;display:flex;flex-direction:column;gap:10px}
+.email-report>label:first-child{font-size:15px;font-weight:600;color:var(--ink)}
+.email-report .er-row{display:flex;gap:8px}
+.calc .email-report input[type=email]{flex:1;min-width:0;font-size:16px;padding:12px;background:#fff;color:var(--ink);border:1px solid #c9c9c9}
+.email-report button{font:inherit;font-weight:600;font-size:15px;padding:12px 20px;background:var(--aqua);color:var(--navy);border:0;cursor:pointer}
+.email-report button:disabled{opacity:.6;cursor:wait}
+.email-report .er-opt{display:flex;flex-direction:row;gap:8px;align-items:flex-start;font-size:12px;line-height:1.5;color:var(--muted)}
+.calc .email-report .er-opt input{width:auto;padding:0;margin-top:2px}
+.email-report .er-trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.email-report .er-status{margin:0;font-size:13px;min-height:1em}
+.email-report .er-status[data-ok="yes"]{color:#2f6b57}.email-report .er-status[data-ok="no"]{color:var(--red)}
+.email-report .er-fine{margin:0;font-size:11px;color:#8a8a8a}
+.calc-chart{margin:20px 0 4px}
+.calc-chart .legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--muted);margin-bottom:8px}
+.calc-chart .li{display:inline-flex;align-items:center;gap:6px}
+.calc-chart .k{display:inline-block;width:18px;height:0;border-top:3px solid}
+.calc-chart .k-low{border-color:#0c1a2a}.calc-chart .k-mine{border-color:#b5473a}
+.calc-chart .k-gap{border-top:2px dashed #b5473a}
+.calc-chart .li-gap{display:none}
+[data-calc-past-state="on"] .calc-chart .li-gap{display:inline-flex}
 .bm4{grid-template-columns:repeat(4,minmax(0,1fr))}.bm4 button{min-height:48px}
 .past-in{border:1px solid #5c6b7a;background:var(--navy2)}
 .past-in>summary{cursor:pointer;list-style:none;padding:16px 18px;color:#fff}
@@ -354,6 +374,10 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
           <div class="row"><span>Fees this year</span><strong data-calc-out="fee-this-year">–</strong></div>
           <div class="row"><span>Value at your cost</span><strong data-calc-out="value-at-fee">–</strong></div>
           <div class="row"><span>Value in <span data-calc-out="benchmark-label"></span> at <span data-calc-out="benchmark-fee"></span></span><strong data-calc-out="value-at-low-cost">–</strong></div>
+          <figure class="calc-chart">
+            <div class="legend"><span class="li"><span class="k k-low"></span>Low-cost <span data-calc-out="benchmark-name">benchmark</span></span><span class="li"><span class="k k-mine"></span>At your cost</span><span class="li li-gap"><span class="k k-gap"></span>If your investing gap continues</span></div>
+            <div data-calc-chart></div>
+          </figure>
           <div class="total"><span>Cost of your fees</span><span class="big" data-calc-out="gap">–</span></div>
           <p class="fine" style="text-align:right"><span data-calc-out="gap-today">–</span> in today's dollars</p>
           <div class="past-out" data-calc-past hidden>
@@ -371,6 +395,17 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
           </div>
           <p class="fine" style="margin-top:20px">Assumes <span data-calc-out="benchmark-return"></span> a year before fees for <span data-calc-out="benchmark-label"></span> (<span data-calc-out="return-basis"></span>), no further deposits, and <span data-calc-out="inflation"></span> inflation for today's dollars. Past returns do not guarantee future results.<span data-calc-past-none> This shows fees only. Add your past return above to include the investing gap.</span></p>
           <a class="btn btn-navy" href="#fees" style="margin-top:16px;text-align:center">Find out why: book a review</a>
+          <form class="email-report" action="/api/report" data-calc-email novalidate>
+            <label for="er-email">Email me my results</label>
+            <div class="er-row">
+              <input id="er-email" type="email" name="email" autocomplete="email" placeholder="you@example.com" required>
+              <button type="submit">Send</button>
+            </div>
+            <label class="er-trap" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+            <label class="er-opt"><input type="checkbox" name="optin"> Also send me occasional insights on fees and investing. Unsubscribe anytime.</label>
+            <p class="er-status" data-calc-email-status aria-live="polite"></p>
+            <p class="er-fine">We send this one report and never share your email.</p>
+          </form>
         </div>
       </div>
     </div>
