@@ -139,3 +139,17 @@ test('only POST is accepted', async () => {
   const r = await worker.fetch(new Request('https://worththefees.com/api/report'), { ASSETS });
   assert.equal(r.status, 405);
 });
+
+test('lead notice goes to NOTIFY_EMAIL through Resend', async () => {
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => { calls.push(JSON.parse(init.body)); return new Response('{}', { status: 200 }); };
+  try {
+    await post({ ...good, optIn: true }, { RESEND_API_KEY: 'test', NOTIFY_EMAIL: 'owner@example.com' });
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls[1].to, ['owner@example.com']);
+    assert.match(calls[1].subject, /^Fee report sent: jane@example.com/);
+    assert.equal(calls[1].reply_to, 'jane@example.com');
+    assert.match(calls[1].text, /Insights opt-in: YES/);
+  } finally { globalThis.fetch = realFetch; }
+});

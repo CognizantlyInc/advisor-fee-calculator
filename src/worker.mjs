@@ -203,12 +203,12 @@ function clean(v, max) {
 // address, and NOTIFY_EMAIL set as a runtime variable. Returns true if sent.
 async function sendEnquiry(env, e, subjectPrefix) {
   const to = (env.NOTIFY_EMAIL || '').trim();
-  if (!to || !env.ENQUIRY_EMAIL) return false;
+  if (!to) return false;
   const from = env.ENQUIRY_FROM || 'enquiries@worththefees.com';
-  const EmailMessage = env.__EmailMessage || (await import('cloudflare:email')).EmailMessage;
   const looksLikeEmail = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(e.contact);
+  const subject = (subjectPrefix || 'Private enquiry') + ': ' + e.name;
   const body = [
-    'New private enquiry from worththefees.com/private',
+    subjectPrefix ? subjectPrefix + ' from worththefees.com' : 'New private enquiry from worththefees.com/private',
     '',
     'Name:    ' + e.name,
     'Contact: ' + e.contact,
@@ -218,11 +218,32 @@ async function sendEnquiry(env, e, subjectPrefix) {
     e.message || '(none)',
     ''
   ].join('\r\n');
+
+  // Preferred: Resend (same service as the visitor reports). Works for any
+  // inbox, no Email Routing needed.
+  if (env.RESEND_API_KEY) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'Worth the Fees <' + from + '>', to: [to], subject,
+          reply_to: looksLikeEmail ? e.contact : undefined, text: body
+        })
+      });
+      if (res.ok) return true;
+      console.log('Notice via Resend failed: ' + res.status);
+    } catch (err) { console.log('Notice via Resend failed: ' + (err && err.message)); }
+  }
+
+  // Fallback: Cloudflare Email Routing (NOTIFY_EMAIL must be a verified destination).
+  if (!env.ENQUIRY_EMAIL) return false;
+  const EmailMessage = env.__EmailMessage || (await import('cloudflare:email')).EmailMessage;
   const raw = [
     'From: "Worth the Fees" <' + from + '>',
     'To: <' + to + '>',
     looksLikeEmail ? 'Reply-To: <' + e.contact + '>' : null,
-    'Subject: ' + (subjectPrefix || 'Private enquiry') + ': ' + e.name,
+    'Subject: ' + subject,
     'Date: ' + e.when.toUTCString(),
     'Message-ID: <' + crypto.randomUUID() + '@worththefees.com>',
     'MIME-Version: 1.0',
