@@ -122,6 +122,18 @@ html{scroll-padding-top:12px}
 .calc .panel{background:#fff;color:var(--ink);border:0}
 .calc .panel .eyebrow{color:var(--muted)}
 .calc .total .big{font-size:34px;color:var(--red)}
+.sr-mail{font-size:14px;color:var(--muted)}
+.sr-mail summary{cursor:pointer;list-style:none}
+.sr-mail summary::-webkit-details-marker{display:none}
+.sr-mail summary span{color:var(--blue);text-decoration:underline}
+.sr-mail form{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-width:460px}
+.sr-mail .er-row{display:flex;gap:8px}
+.sr-mail input[type=email]{flex:1;min-width:0;font:inherit;font-size:16px;padding:12px;border:1px solid #c9c9c9;background:#fff;color:var(--ink)}
+.sr-mail button{font:inherit;font-weight:600;font-size:15px;padding:12px 20px;background:var(--navy);color:#fff;border:0;cursor:pointer}
+.sr-mail button:disabled{opacity:.6;cursor:wait}
+.sr-mail .er-trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.sr-mail .er-status{margin:0;font-size:13px;min-height:1em}
+.sr-mail .er-status[data-ok="yes"]{color:#2f6b57}.sr-mail .er-status[data-ok="no"]{color:var(--red)}
 .sr-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:center}
 .sr-stage{position:relative;display:block;aspect-ratio:1/1;max-width:520px;width:100%;margin:0 auto;text-decoration:none;color:inherit}
 .sr-page{position:absolute;width:60%;aspect-ratio:8.5/11;left:4%;top:7%;background:#fff;border-radius:2px;
@@ -551,7 +563,36 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
         </div>
         <p class="copy" style="font-size:15px">A five-pillar scorecard covering performance, cost, decisions, fit with your mandate and integrity, plus the questions to raise at your next review.</p>
         <div><a class="btn btn-navy" href="/sample-report.pdf" target="_blank" rel="noopener">Download the sample report (PDF)</a></div>
+        <details class="sr-mail">
+          <summary>Want it in your inbox? <span>Email me a copy.</span></summary>
+          <form action="/api/sample-report" data-sample-email novalidate>
+            <div class="er-row">
+              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" aria-label="Your email address" required>
+              <button type="submit">Send</button>
+            </div>
+            <label class="er-trap" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+            <p class="er-status" data-status aria-live="polite"></p>
+          </form>
+        </details>
         <p class="fine">Illustrative example using hypothetical data.</p>
+        <script>
+        (function () {
+          var f = document.querySelector('[data-sample-email]'); if (!f) return;
+          f.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var st = f.querySelector('[data-status]'), b = f.querySelector('button'), em = f.querySelector('[name=email]');
+            var say = function (t, ok) { st.textContent = t; st.setAttribute('data-ok', ok ? 'yes' : 'no'); };
+            if (!em.value.trim()) { say('Please enter your email address.', false); return; }
+            b.disabled = true; say('Sending…', true);
+            fetch(f.getAttribute('action'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: em.value.trim(), website: f.querySelector('[name=website]').value }) })
+              .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+              .then(function (r) { if (r && r.ok) say('Sent. Check your inbox (and spam folder) in a minute or two.', true); else say((r && r.error) || 'We couldn’t send it just now. Please try again.', false); })
+              .catch(function () { say('We couldn’t send it just now. Please try again.', false); })
+              .then(function () { b.disabled = false; });
+          });
+        })();
+        </script>
       </div>
     </div>
   </section>

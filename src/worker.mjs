@@ -21,6 +21,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     if (path === '/api/report') return emailReport(request, env);
+    if (path === '/api/sample-report') return emailSampleReport(request, env);
     const isPrivate = path === '/private' || path.startsWith('/private/');
     if (!isPrivate) return env.ASSETS.fetch(request);
 
@@ -87,6 +88,65 @@ function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 }
 
+function tooMany(request) {
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const now = Date.now();
+  const hits = (recent.get(ip) || []).filter((t) => now - t < WINDOW_MS);
+  if (hits.length >= LIMIT) return true;
+  hits.push(now); recent.set(ip, hits);
+  return false;
+}
+
+function validEmail(email) {
+  return email.length <= 254 && /^[^\s@<>,;]+@[^\s@<>,;]+\.[a-z]{2,}$/i.test(email);
+}
+
+// "Want it in your inbox? Email me a copy." (POST /api/sample-report, JSON)
+// Sends the sample report PDF (attached, plus a link) through Resend.
+export async function emailSampleReport(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Use POST.' }, 405);
+  let d;
+  try { d = await request.json(); } catch (e) { return json({ ok: false, error: 'Bad request.' }, 400); }
+  if (!d || typeof d !== 'object') return json({ ok: false, error: 'Bad request.' }, 400);
+  if (d.website) return json({ ok: true });
+  const email = String(d.email || '').trim();
+  if (!validEmail(email)) return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
+  if (tooMany(request)) return json({ ok: false, error: 'Too many requests. Please try again later.' }, 429);
+  if (!env.RESEND_API_KEY) return json({ ok: false, error: 'Email is not switched on yet.' }, 503);
+
+  const origin = new URL(request.url).origin;
+  const pdfUrl = origin + '/sample-report.pdf';
+  const html = '<div style="max-width:560px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#1e1e1e">' +
+    '<p style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5e5e5e;margin:0 0 8px">Worth the Fees · Powered by Prof of Wall Street</p>' +
+    '<h1 style="font-family:Georgia,serif;font-weight:400;font-size:26px;margin:0 0 16px">Your sample report</h1>' +
+    '<p style="font-size:15px;line-height:1.6">Here is the sample Wealth Manager Performance &amp; Risk Assessment. It’s attached as a PDF, and you can also <a href="' + pdfUrl + '" style="color:#1f55a5">open it here</a>.</p>' +
+    '<p style="font-size:15px;line-height:1.6">It follows a hypothetical family through the five pillars of a review: performance, cost, decisions, fit with their mandate, and integrity. Your own review uses your actual statements and trade history.</p>' +
+    '<p style="margin:20px 0"><a href="https://calendly.com/profofwallstreet/15min" style="display:inline-block;background:#0c1a2a;color:#fff;text-decoration:none;padding:14px 22px;font-weight:600">Book a 15-minute call</a></p>' +
+    '<p style="font-size:13px"><a href="' + origin + '/#calculator" style="color:#1f55a5">Try the free fee calculator</a></p>' +
+    '<p style="font-size:11px;color:#8a8a8a;margin-top:28px">You asked us to email this from worththefees.com. We don’t share your email address. Illustrative example using hypothetical data.</p></div>';
+  const text = 'Here is the sample Wealth Manager Performance & Risk Assessment (attached).\nOpen it online: ' + pdfUrl +
+    '\n\nBook a 15-minute call: https://calendly.com/profofwallstreet/15min\nTry the free fee calculator: ' + origin + '/#calculator';
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: env.REPORT_FROM || 'Worth the Fees <reports@worththefees.com>',
+      to: [email],
+      reply_to: env.REPORT_REPLY_TO || undefined,
+      subject: 'Your sample report from Worth the Fees',
+      html, text,
+      attachments: [{ filename: 'Worth-the-Fees-Sample-Report.pdf', path: pdfUrl }]
+    })
+  });
+  if (!res.ok) {
+    console.log('Resend failed: ' + res.status + ' ' + (await res.text()).slice(0, 300));
+    return json({ ok: false, error: 'We couldn’t send it just now. Please try again.' }, 502);
+  }
+  await sendEnquiry(env, { name: email, contact: email, message: 'Requested the sample report by email.', when: new Date() }, 'Sample report sent');
+  return json({ ok: true });
+}
+
 export async function emailReport(request, env) {
   if (request.method !== 'POST') return json({ ok: false, error: 'Use POST.' }, 405);
   let d;
@@ -95,15 +155,8 @@ export async function emailReport(request, env) {
   if (d.website) return json({ ok: true }); // spam trap: pretend it worked
 
   const email = String(d.email || '').trim();
-  if (email.length > 254 || !/^[^\s@<>,;]+@[^\s@<>,;]+\.[a-z]{2,}$/i.test(email)) {
-    return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
-  }
-
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const now = Date.now();
-  const hits = (recent.get(ip) || []).filter((t) => now - t < WINDOW_MS);
-  if (hits.length >= LIMIT) return json({ ok: false, error: 'Too many requests. Please try again later.' }, 429);
-  hits.push(now); recent.set(ip, hits);
+  if (!validEmail(email)) return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
+  if (tooMany(request)) return json({ ok: false, error: 'Too many requests. Please try again later.' }, 429);
 
   const report = buildReport(d);
   if (!report) return json({ ok: false, error: 'Something was missing. Please check your numbers.' }, 400);

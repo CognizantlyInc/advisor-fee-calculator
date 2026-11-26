@@ -153,3 +153,19 @@ test('lead notice goes to NOTIFY_EMAIL through Resend', async () => {
     assert.match(calls[1].text, /Insights opt-in: YES/);
   } finally { globalThis.fetch = realFetch; }
 });
+
+test('sample report is emailed with the PDF attached, and Amos is notified', async () => {
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => { calls.push(JSON.parse(init.body)); return new Response('{}', { status: 200 }); };
+  try {
+    const r = await worker.fetch(new Request('https://worththefees.com/api/sample-report', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': 'x' + Math.random() },
+      body: JSON.stringify({ email: 'sam@example.com' })
+    }), { ASSETS, RESEND_API_KEY: 'test', NOTIFY_EMAIL: 'owner@example.com' });
+    assert.equal((await r.json()).ok, true);
+    assert.deepEqual(calls[0].to, ['sam@example.com']);
+    assert.equal(calls[0].attachments[0].path, 'https://worththefees.com/sample-report.pdf');
+    assert.match(calls[1].subject, /^Sample report sent: sam@example.com/);
+  } finally { globalThis.fetch = realFetch; }
+});
