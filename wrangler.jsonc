@@ -16,6 +16,10 @@
   // Sends private-page enquiries by email (Cloudflare Email Routing).
   // The recipient is the NOTIFY_EMAIL runtime variable, kept out of this repo.
   "send_email": [{ "name": "ENQUIRY_EMAIL" }],
+  // Anonymous usage counts (calculator used, reports emailed, call clicks).
+  "d1_databases": [
+    { "binding": "STATS", "database_name": "worththefees-stats", "database_id": "27d95220-a8f9-469d-8030-d59eec433810" }
+  ],
   "assets": {
     "directory": "./",
     "binding": "ASSETS",

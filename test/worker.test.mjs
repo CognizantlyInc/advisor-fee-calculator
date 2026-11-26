@@ -169,3 +169,20 @@ test('sample report is emailed with the PDF attached, and Amos is notified', asy
     assert.match(calls[1].subject, /^Sample report sent: sam@example.com/);
   } finally { globalThis.fetch = realFetch; }
 });
+
+// ---- Anonymous usage counts ----
+test('events are counted in D1, unknown events are refused', async () => {
+  const writes = [];
+  const STATS = { prepare: (sql) => ({ bind: (...a) => ({ run: async () => { writes.push({ sql, a }); } }) }) };
+  const ev = (body) => worker.fetch(new Request('https://worththefees.com/api/event', {
+    method: 'POST', headers: { 'CF-Connecting-IP': 'ev' + Math.random() }, body: JSON.stringify(body)
+  }), { ASSETS, STATS });
+  assert.equal((await ev({ name: 'calculator_used', detail: 'ca' })).status, 204);
+  assert.equal(writes.length, 1);
+  assert.match(writes[0].sql, /ON CONFLICT/);
+  assert.deepEqual(writes[0].a.slice(1), ['calculator_used', 'ca']);
+  assert.equal((await ev({ name: 'drop table', detail: 'x' })).status, 400);
+  await ev({ name: 'book_call_click', detail: '<script>' });
+  assert.equal(writes[1].a[2], '');   // unknown detail is stored as blank
+  assert.equal(writes.length, 2);
+});

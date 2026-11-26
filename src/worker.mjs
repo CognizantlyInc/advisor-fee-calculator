@@ -22,6 +22,7 @@ export default {
     const path = url.pathname;
     if (path === '/api/report') return emailReport(request, env);
     if (path === '/api/sample-report') return emailSampleReport(request, env);
+    if (path === '/api/event') return recordEvent(request, env);
     const isPrivate = path === '/private' || path.startsWith('/private/');
     if (!isPrivate) return env.ASSETS.fetch(request);
 
@@ -86,6 +87,38 @@ const LIMIT = 5, WINDOW_MS = 60 * 60 * 1000;
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}
+
+// ---------------------------------------------------------------------------
+// Anonymous usage counts (POST /api/event). Stored in D1 (binding STATS) as
+// one row per day + event + detail, with a running count. No IPs, no cookies,
+// nothing that identifies a visitor.
+// ---------------------------------------------------------------------------
+export const EVENTS = ['calculator_used', 'past_return_entered', 'report_emailed',
+  'sample_report_download', 'sample_report_emailed', 'book_call_click'];
+const DETAILS = ['', 'us', 'ca', 'home', 'private'];
+const eventHits = new Map();
+
+export async function recordEvent(request, env) {
+  if (request.method !== 'POST') return new Response(null, { status: 405 });
+  let d = {};
+  try { d = JSON.parse(await request.text()); } catch (e) { return new Response(null, { status: 400 }); }
+  const name = String(d.name || '');
+  const detail = DETAILS.includes(String(d.detail || '')) ? String(d.detail || '') : '';
+  if (!EVENTS.includes(name)) return new Response(null, { status: 400 });
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const now = Date.now();
+  const hits = (eventHits.get(ip) || []).filter((t) => now - t < 60 * 60 * 1000);
+  if (hits.length >= 60) return new Response(null, { status: 204 });
+  hits.push(now); eventHits.set(ip, hits);
+  if (env.STATS) {
+    const day = new Date().toISOString().slice(0, 10);
+    try {
+      await env.STATS.prepare('INSERT INTO events (day, name, detail, count) VALUES (?1, ?2, ?3, 1) ' +
+        'ON CONFLICT(day, name, detail) DO UPDATE SET count = count + 1').bind(day, name, detail).run();
+    } catch (err) { console.log('stats write failed: ' + (err && err.message)); }
+  }
+  return new Response(null, { status: 204 });
 }
 
 function tooMany(request) {

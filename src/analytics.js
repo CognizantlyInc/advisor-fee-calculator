@@ -1,8 +1,10 @@
 /*!
- * Site analytics (Google Analytics 4) for worththefees.com
+ * Site analytics for worththefees.com
  *
- * Paste the GA4 Measurement ID below (Admin → Data streams → Web).
- * While it is empty, nothing loads and nothing is tracked.
+ * Events are counted anonymously in our own Cloudflare database (POST
+ * /api/event): no cookies, no IPs, no personal data.
+ * Google Analytics is optional: paste a GA4 Measurement ID below to also
+ * send the same events to GA. While it is empty, GA never loads.
  *
  * Custom events:
  *   calculator_used        first time a visitor changes a calculator input
@@ -20,6 +22,12 @@
   function track(name, params, once) {
     if (once) { if (sent[name]) return; sent[name] = true; }
     if (typeof window.gtag === 'function') window.gtag('event', name, params || {});
+    var detail = (params && params.country) || (location.pathname.indexOf('/private') === 0 ? 'private' : 'home');
+    var body = JSON.stringify({ name: name, detail: detail });
+    try {
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/event', new Blob([body], { type: 'text/plain' }));
+      else fetch('/api/event', { method: 'POST', body: body, keepalive: true });
+    } catch (e) {}
   }
   window.pwsTrack = track;
 
