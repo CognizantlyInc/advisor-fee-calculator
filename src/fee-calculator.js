@@ -483,7 +483,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
       }).then(function (res) { return res.json().catch(function () { return { ok: false }; }); })
         .then(function (r) {
-          if (r && r.ok) say('Sent. Check your inbox (and spam folder) in a minute or two.', true);
+          if (r && r.ok) { say('Sent. Check your inbox (and spam folder) in a minute or two.', true); if (global.pwsTrack) global.pwsTrack('report_emailed', { country: body.country, benchmark: body.benchmark }); }
           else say((r && r.error) || 'We couldn’t send it just now. Please try again.', false);
         })
         .catch(function () { say('We couldn’t send it just now. Please try again.', false); })
