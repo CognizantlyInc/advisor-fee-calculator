@@ -37,7 +37,21 @@ export default {
       return page(loginHtml('That code didn’t match. Please try again, or contact your Ciccone McKay advisor.'), 401);
     }
 
-    if (readCookie(request, COOKIE) === token) {
+    const signedIn = readCookie(request, COOKIE) === token;
+
+    if (path === '/private/enquire' && request.method === 'POST') {
+      if (!signedIn) return redirect('/private');
+      const form = await request.formData();
+      if (String(form.get('website') || '')) return redirect('/private/thanks.html'); // spam trap
+      const name = clean(form.get('name'), 120);
+      const contact = clean(form.get('contact'), 160);
+      const message = String(form.get('message') || '').slice(0, 4000).trim();
+      if (!name || !contact) return redirect('/private/?missing=1#begin');
+      const sent = await sendEnquiry(env, { name, contact, message, when: new Date() });
+      return redirect(sent ? '/private/thanks.html' : '/private/?error=1#begin');
+    }
+
+    if (signedIn) {
       // Serve the private files. /private → /private/
       if (path === '/private') return redirect('/private/');
       const res = await env.ASSETS.fetch(request);
@@ -52,6 +66,54 @@ export default {
 };
 
 // ---------------------------------------------------------------------------
+
+// Removes line breaks (blocks email header injection) and trims length.
+function clean(v, max) {
+  return String(v || '').replace(/[\r\n]+/g, ' ').trim().slice(0, max);
+}
+
+// Emails an enquiry to NOTIFY_EMAIL using Cloudflare Email Routing.
+// Needs: the ENQUIRY_EMAIL send_email binding (wrangler.jsonc), Email Routing
+// turned on for worththefees.com, NOTIFY_EMAIL verified as a destination
+// address, and NOTIFY_EMAIL set as a runtime variable. Returns true if sent.
+async function sendEnquiry(env, e) {
+  const to = (env.NOTIFY_EMAIL || '').trim();
+  if (!to || !env.ENQUIRY_EMAIL) return false;
+  const from = env.ENQUIRY_FROM || 'enquiries@worththefees.com';
+  const EmailMessage = env.__EmailMessage || (await import('cloudflare:email')).EmailMessage;
+  const looksLikeEmail = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(e.contact);
+  const body = [
+    'New private enquiry from worththefees.com/private',
+    '',
+    'Name:    ' + e.name,
+    'Contact: ' + e.contact,
+    'Sent:    ' + e.when.toUTCString(),
+    '',
+    'Message:',
+    e.message || '(none)',
+    ''
+  ].join('\r\n');
+  const raw = [
+    'From: "Worth the Fees" <' + from + '>',
+    'To: <' + to + '>',
+    looksLikeEmail ? 'Reply-To: <' + e.contact + '>' : null,
+    'Subject: Private enquiry: ' + e.name,
+    'Date: ' + e.when.toUTCString(),
+    'Message-ID: <' + crypto.randomUUID() + '@worththefees.com>',
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=utf-8',
+    'Content-Transfer-Encoding: 8bit',
+    '',
+    body
+  ].filter((l) => l !== null).join('\r\n');
+  try {
+    await env.ENQUIRY_EMAIL.send(new EmailMessage(from, to, raw));
+    return true;
+  } catch (err) {
+    console.log('Enquiry email failed: ' + (err && err.message));
+    return false;
+  }
+}
 
 async function sha256(text) {
   const data = new TextEncoder().encode(text);

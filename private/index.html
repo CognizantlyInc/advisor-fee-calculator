@@ -56,6 +56,16 @@ ol.steps p{margin-top:8px;font-size:16px;line-height:1.65;color:var(--body)}
 .begin p{font-size:16px;line-height:1.7;color:#d7ddd5}
 .begin .btn{display:inline-block;margin-top:8px;font-size:15px;letter-spacing:.04em;padding:16px 26px;background:var(--paper);color:var(--forest);text-decoration:none}
 .begin .btn:hover{background:#fff}
+.enquiry{display:flex;flex-direction:column;gap:22px;margin-top:8px}
+.enquiry label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#b9c4bb}
+.enquiry .opt{color:#8b998f}
+.enquiry input,.enquiry textarea{font:inherit;font-size:18px;padding:10px 0;border:0;border-bottom:1px solid #7f8f84;background:transparent;color:var(--paper);outline:none;resize:vertical}
+.enquiry input:focus,.enquiry textarea:focus{border-bottom:2px solid var(--paper)}
+.enquiry button{align-self:flex-start;margin-top:8px;font:inherit;font-size:15px;letter-spacing:.04em;padding:16px 26px;min-height:48px;background:var(--paper);color:var(--forest);border:0;cursor:pointer}
+.enquiry button:hover{background:#fff}
+.enquiry .trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.begin .alt{font-size:14px;color:#b9c4bb}.begin .alt a{color:var(--paper)}
+.form-msg{padding:12px 16px;border:1px solid #7f8f84;font-size:15px}
 .foot{border-top:1px solid #3b4d42}
 .foot .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding-top:24px;padding-bottom:24px;font-size:12px;color:#9faba2}
 .foot a{color:#9faba2}
@@ -138,13 +148,21 @@ ol.steps p{margin-top:8px;font-size:16px;line-height:1.65;color:var(--body)}
   </div>
 </section>
 
-<section class="begin">
+<section class="begin" id="begin">
   <div class="wrap sec split">
     <p class="label">Begin</p>
     <div style="display:flex;flex-direction:column;gap:24px;max-width:620px">
       <h2 class="serif">Request a private conversation.</h2>
-      <p>Each engagement is scoped to the family. Choose a time that suits you and I'll take it from there personally.</p>
-      <a class="btn" href="https://calendly.com/profofwallstreet/15min" target="_blank" rel="noopener">Arrange a private conversation</a>
+      <p>Each engagement is scoped to the family. Leave your details and I'll be in touch personally within one business day.</p>
+      <p class="form-msg" id="form-msg" role="alert" hidden></p>
+      <form class="enquiry" method="post" action="/private/enquire">
+        <label>Name<input name="name" type="text" autocomplete="name" required maxlength="120"></label>
+        <label>Email or phone<input name="contact" type="text" autocomplete="email" required maxlength="160"></label>
+        <label>Anything you'd like me to know <span class="opt">(optional)</span><textarea name="message" rows="4" maxlength="4000"></textarea></label>
+        <label class="trap" aria-hidden="true">Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label>
+        <button type="submit">Request a conversation</button>
+      </form>
+      <p class="alt">Prefer to choose a time now? <a href="https://calendly.com/profofwallstreet/15min" target="_blank" rel="noopener">Book directly</a>.</p>
     </div>
   </div>
   <div class="foot">
@@ -155,5 +173,10 @@ ol.steps p{margin-top:8px;font-size:16px;line-height:1.65;color:var(--body)}
   </div>
 </section>
 
+<script>
+(function(){var q=location.search,m=document.getElementById('form-msg');if(!m)return;
+if(q.indexOf('missing=1')>-1){m.textContent='Please add your name and an email or phone number.';m.hidden=false;}
+else if(q.indexOf('error=1')>-1){m.innerHTML='Sorry, your message could not be sent just now. Please <a href="https://calendly.com/profofwallstreet/15min" target="_blank" rel="noopener">book a time directly</a>.';m.hidden=false;}})();
+</script>
 </body>
 </html>

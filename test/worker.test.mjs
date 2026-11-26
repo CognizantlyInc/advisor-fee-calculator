@@ -62,3 +62,47 @@ test('sign out clears the cookie', async () => {
   assert.equal(r.status, 303);
   assert.match(r.headers.get('Set-Cookie'), /Max-Age=0/);
 });
+
+// ---- enquiry form ----
+class FakeEmailMessage { constructor(from, to, raw) { Object.assign(this, { from, to, raw }); } }
+const signedInCookie = async () => (await login('CM-2026')).headers.get('Set-Cookie').split(';')[0];
+const enquire = (fields, cookie, extraEnv = {}) => {
+  const sent = [];
+  const e = { ...env, NOTIFY_EMAIL: 'owner@example.com', ENQUIRY_EMAIL: { send: async (m) => sent.push(m) }, __EmailMessage: FakeEmailMessage, ...extraEnv };
+  const req = new Request('https://worththefees.com/private/enquire', { method: 'POST', body: new URLSearchParams(fields), headers: cookie ? { Cookie: cookie } : {} });
+  return worker.fetch(req, e).then((r) => ({ r, sent }));
+};
+
+test('enquiry is emailed and the visitor sees a thank-you page', async () => {
+  const { r, sent } = await enquire({ name: 'Jane Doe', contact: 'jane@example.com', message: 'Hello' }, await signedInCookie());
+  assert.equal(r.headers.get('Location'), '/private/thanks.html');
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].to, 'owner@example.com');
+  assert.match(sent[0].raw, /Subject: Private enquiry: Jane Doe/);
+  assert.match(sent[0].raw, /Reply-To: <jane@example.com>/);
+  assert.match(sent[0].raw, /Hello/);
+});
+
+test('enquiry needs the access code', async () => {
+  const { r, sent } = await enquire({ name: 'X', contact: 'x@example.com' });
+  assert.equal(r.headers.get('Location'), '/private');
+  assert.equal(sent.length, 0);
+});
+
+test('header injection is blocked', async () => {
+  const { sent } = await enquire({ name: 'Eve\r\nBcc: spam@example.com', contact: 'e@example.com' }, await signedInCookie());
+  assert.doesNotMatch(sent[0].raw, /\r\nBcc:/);
+});
+
+test('spam trap and missing fields send nothing', async () => {
+  const c = await signedInCookie();
+  assert.equal((await enquire({ name: 'Bot', contact: 'b@example.com', website: 'x' }, c)).sent.length, 0);
+  const { r, sent } = await enquire({ name: '', contact: '' }, c);
+  assert.match(r.headers.get('Location'), /missing=1/);
+  assert.equal(sent.length, 0);
+});
+
+test('if email is not set up, the visitor is offered Calendly', async () => {
+  const { r } = await enquire({ name: 'A', contact: 'a@example.com' }, await signedInCookie(), { NOTIFY_EMAIL: '' });
+  assert.match(r.headers.get('Location'), /error=1/);
+});
