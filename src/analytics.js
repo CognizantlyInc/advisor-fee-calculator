@@ -25,8 +25,8 @@
     var detail = (params && params.country) || (location.pathname.indexOf('/private') === 0 ? 'private' : 'home');
     var body = JSON.stringify({ name: name, detail: detail });
     try {
-      if (navigator.sendBeacon) navigator.sendBeacon('/api/event', new Blob([body], { type: 'text/plain' }));
-      else fetch('/api/event', { method: 'POST', body: body, keepalive: true });
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/event/' + name, new Blob([body], { type: 'text/plain' }));
+      else fetch('/api/event/' + name, { method: 'POST', body: body, keepalive: true });
     } catch (e) {}
   }
   window.pwsTrack = track;

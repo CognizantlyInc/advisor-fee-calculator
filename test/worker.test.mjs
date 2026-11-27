@@ -186,3 +186,13 @@ test('events are counted in D1, unknown events are refused', async () => {
   assert.equal(writes[1].a[2], '');   // unknown detail is stored as blank
   assert.equal(writes.length, 2);
 });
+
+test('event name can come from the path', async () => {
+  const writes = [];
+  const STATS = { prepare: () => ({ bind: (...a) => ({ run: async () => { writes.push(a); } }) }) };
+  const r = await worker.fetch(new Request('https://worththefees.com/api/event/report_emailed', {
+    method: 'POST', headers: { 'CF-Connecting-IP': 'p' + Math.random() }, body: JSON.stringify({ detail: 'us' })
+  }), { ASSETS, STATS });
+  assert.equal(r.status, 204);
+  assert.deepEqual(writes[0].slice(1), ['report_emailed', 'us']);
+});

@@ -22,7 +22,7 @@ export default {
     const path = url.pathname;
     if (path === '/api/report') return emailReport(request, env);
     if (path === '/api/sample-report') return emailSampleReport(request, env);
-    if (path === '/api/event') return recordEvent(request, env);
+    if (path === '/api/event' || path.startsWith('/api/event/')) return recordEvent(request, env);
     const isPrivate = path === '/private' || path.startsWith('/private/');
     if (!isPrivate) return env.ASSETS.fetch(request);
 
@@ -103,7 +103,10 @@ export async function recordEvent(request, env) {
   if (request.method !== 'POST') return new Response(null, { status: 405 });
   let d = {};
   try { d = JSON.parse(await request.text()); } catch (e) { return new Response(null, { status: 400 }); }
-  const name = String(d.name || '');
+  // The event name can also be in the path (/api/event/calculator_used), so each
+  // action shows up as its own path in Cloudflare's Requests analytics.
+  const fromPath = new URL(request.url).pathname.split('/')[3] || '';
+  const name = String(d.name || fromPath);
   const detail = DETAILS.includes(String(d.detail || '')) ? String(d.detail || '') : '';
   if (!EVENTS.includes(name)) return new Response(null, { status: 400 });
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
