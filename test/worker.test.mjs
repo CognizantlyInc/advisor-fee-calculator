@@ -145,12 +145,13 @@ test('lead notice goes to NOTIFY_EMAIL through Resend', async () => {
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url, init) => { calls.push(JSON.parse(init.body)); return new Response('{}', { status: 200 }); };
   try {
-    await post({ ...good, optIn: true }, { RESEND_API_KEY: 'test', NOTIFY_EMAIL: 'owner@example.com' });
+    await post({ ...good, optIn: true, source: 'marcus' }, { RESEND_API_KEY: 'test', NOTIFY_EMAIL: 'owner@example.com' });
     assert.equal(calls.length, 2);
     assert.deepEqual(calls[1].to, ['owner@example.com']);
     assert.match(calls[1].subject, /^Fee report sent: jane@example.com/);
     assert.equal(calls[1].reply_to, 'jane@example.com');
     assert.match(calls[1].text, /Insights opt-in: YES/);
+    assert.match(calls[1].text, /Came from: marcus/);
   } finally { globalThis.fetch = realFetch; }
 });
 
@@ -177,14 +178,16 @@ test('events are counted in D1, unknown events are refused', async () => {
   const ev = (body) => worker.fetch(new Request('https://worththefees.com/api/event', {
     method: 'POST', headers: { 'CF-Connecting-IP': 'ev' + Math.random() }, body: JSON.stringify(body)
   }), { ASSETS, STATS });
-  assert.equal((await ev({ name: 'calculator_used', detail: 'ca' })).status, 204);
-  assert.equal(writes.length, 1);
+  assert.equal((await ev({ name: 'calculator_used', detail: 'ca', source: 'LinkedIn/Dec-Post' })).status, 204);
+  assert.equal(writes.length, 2);
   assert.match(writes[0].sql, /ON CONFLICT/);
   assert.deepEqual(writes[0].a.slice(1), ['calculator_used', 'ca']);
+  assert.deepEqual(writes[1].a.slice(1), ['calculator_used', 'linkedin/dec-post']);
   assert.equal((await ev({ name: 'drop table', detail: 'x' })).status, 400);
   await ev({ name: 'book_call_click', detail: '<script>' });
-  assert.equal(writes[1].a[2], '');   // unknown detail is stored as blank
-  assert.equal(writes.length, 2);
+  assert.equal(writes[2].a[2], '');   // unknown detail is stored as blank
+  assert.equal(writes[3].a[2], 'unknown');
+  assert.equal(writes.length, 4);
 });
 
 test('event name can come from the path', async () => {

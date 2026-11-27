@@ -51,7 +51,7 @@ export default {
       if (String(form.get('website') || '')) return redirect('/private/thanks.html'); // spam trap
       const name = clean(form.get('name'), 120);
       const contact = clean(form.get('contact'), 160);
-      const message = String(form.get('message') || '').slice(0, 4000).trim();
+      const message = (String(form.get('message') || '').slice(0, 4000).trim() + '\r\n\r\nCame from: ' + cleanSource(form.get('source'))).trim();
       if (!name || !contact) return redirect('/private/?missing=1#begin');
       const sent = await sendEnquiry(env, { name, contact, message, when: new Date() });
       return redirect(sent ? '/private/thanks.html' : '/private/?error=1#begin');
@@ -119,9 +119,17 @@ export async function recordEvent(request, env) {
     try {
       await env.STATS.prepare('INSERT INTO events (day, name, detail, count) VALUES (?1, ?2, ?3, 1) ' +
         'ON CONFLICT(day, name, detail) DO UPDATE SET count = count + 1').bind(day, name, detail).run();
+      await env.STATS.prepare('INSERT INTO event_sources (day, name, source, count) VALUES (?1, ?2, ?3, 1) ' +
+        'ON CONFLICT(day, name, source) DO UPDATE SET count = count + 1').bind(day, name, cleanSource(d.source)).run();
     } catch (err) { console.log('stats write failed: ' + (err && err.message)); }
   }
   return new Response(null, { status: 204 });
+}
+
+// Visitor source label from the page (utm_source/campaign, ?src=, referrer).
+function cleanSource(v) {
+  const s = String(v || '').toLowerCase().replace(/[^a-z0-9._\/-]/g, '').slice(0, 60);
+  return s || 'unknown';
 }
 
 function tooMany(request) {
@@ -179,7 +187,7 @@ export async function emailSampleReport(request, env) {
     console.log('Resend failed: ' + res.status + ' ' + (await res.text()).slice(0, 300));
     return json({ ok: false, error: 'We couldn’t send it just now. Please try again.' }, 502);
   }
-  await sendEnquiry(env, { name: email, contact: email, message: 'Requested the sample report by email.', when: new Date() }, 'Sample report sent');
+  await sendEnquiry(env, { name: email, contact: email, message: 'Requested the sample report by email.\r\nCame from: ' + cleanSource(d.source), when: new Date() }, 'Sample report sent');
   return json({ ok: true });
 }
 
@@ -219,7 +227,7 @@ export async function emailReport(request, env) {
   await sendEnquiry(env, {
     name: email,
     contact: email,
-    message: report.summary + '\r\nInsights opt-in: ' + (d.optIn ? 'YES' : 'no'),
+    message: report.summary + '\r\nInsights opt-in: ' + (d.optIn ? 'YES' : 'no') + '\r\nCame from: ' + cleanSource(d.source),
     when: new Date()
   }, 'Fee report sent');
   return json({ ok: true });

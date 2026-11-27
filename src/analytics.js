@@ -18,12 +18,40 @@
   'use strict';
   var GA_ID = ''; // e.g. 'G-XXXXXXXXXX'
 
+  // Where did this visitor come from? Checked in this order:
+  //   ?utm_source=linkedin&utm_campaign=dec-post  -> "linkedin/dec-post"
+  //   ?src=marcus                                 -> "marcus"
+  //   the referring site (google.com, linkedin.com) -> "google.com"
+  //   otherwise                                     -> "direct"
+  // Kept for the visit only (sessionStorage), no cookies.
+  function clean(v) { return String(v || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 40); }
+  function findSource() {
+    var q = new URLSearchParams(location.search);
+    var src = clean(q.get('utm_source') || q.get('src'));
+    var camp = clean(q.get('utm_campaign'));
+    if (src) return camp ? src + '/' + camp : src;
+    try {
+      var ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : '';
+      if (ref && ref !== location.hostname.replace(/^www\./, '')) return clean(ref);
+    } catch (e) {}
+    return 'direct';
+  }
+  var source = 'direct';
+  try {
+    var saved = sessionStorage.getItem('pws_src');
+    var found = findSource();
+    // A tagged link or outside referrer wins; otherwise keep what this visit started with.
+    source = (found !== 'direct' || !saved) ? found : saved;
+    if (found !== 'direct' || !saved) sessionStorage.setItem('pws_src', source);
+  } catch (e) { source = findSource(); }
+  window.pwsSource = function () { return source; };
+
   var sent = {};
   function track(name, params, once) {
     if (once) { if (sent[name]) return; sent[name] = true; }
     if (typeof window.gtag === 'function') window.gtag('event', name, params || {});
     var detail = (params && params.country) || (location.pathname.indexOf('/private') === 0 ? 'private' : 'home');
-    var body = JSON.stringify({ name: name, detail: detail });
+    var body = JSON.stringify({ name: name, detail: detail, source: source });
     try {
       if (navigator.sendBeacon) navigator.sendBeacon('/api/event/' + name, new Blob([body], { type: 'text/plain' }));
       else fetch('/api/event/' + name, { method: 'POST', body: body, keepalive: true });
@@ -47,6 +75,10 @@
   }
 
   onReady(function () {
+    // Forms that post normally (private enquiry) carry the source in a hidden field.
+    var hidden = document.querySelectorAll('input[name="source"]');
+    for (var i = 0; i < hidden.length; i++) hidden[i].value = source;
+
     // Calculator: count real interaction only (the page loads with example numbers).
     var calc = document.querySelector('[data-calc-root]');
     if (calc) {

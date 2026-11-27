@@ -583,7 +583,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
             if (!em.value.trim()) { say('Please enter your email address.', false); return; }
             b.disabled = true; say('Sending…', true);
             fetch(f.getAttribute('action'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: em.value.trim(), website: f.querySelector('[name=website]').value }) })
+              body: JSON.stringify({ email: em.value.trim(), website: f.querySelector('[name=website]').value, source: window.pwsSource ? window.pwsSource() : '' }) })
               .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
               .then(function (r) { if (r && r.ok) { say('Sent. Check your inbox (and spam folder) in a minute or two.', true); if (window.pwsTrack) window.pwsTrack('sample_report_emailed'); } else say((r && r.error) || 'We couldn’t send it just now. Please try again.', false); })
               .catch(function () { say('We couldn’t send it just now. Please try again.', false); })

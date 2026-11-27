@@ -477,6 +477,7 @@
       body.email = addr.value.trim();
       var opt = emailForm.querySelector('[name="optin"]'); body.optIn = !!(opt && opt.checked);
       var trap = emailForm.querySelector('[name="website"]'); body.website = trap ? trap.value : '';
+      body.source = global.pwsSource ? global.pwsSource() : '';
       if (btn) btn.disabled = true;
       say('Sending…', true);
       fetch(emailForm.getAttribute('action') || '/api/report', {
