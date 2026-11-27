@@ -95,7 +95,7 @@ function json(body, status = 200) {
 // nothing that identifies a visitor.
 // ---------------------------------------------------------------------------
 export const EVENTS = ['calculator_used', 'past_return_entered', 'report_emailed',
-  'sample_report_download', 'sample_report_emailed', 'book_call_click'];
+  'sample_report_download', 'sample_report_emailed', 'book_call_click', 'survey_click'];
 const DETAILS = ['', 'us', 'ca', 'home', 'private'];
 const eventHits = new Map();
 

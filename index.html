@@ -60,6 +60,10 @@ html{scroll-padding-top:12px}
 .rscale{margin-top:56px}
 .rbar{height:10px;border-radius:5px;background:linear-gradient(90deg,#3f7a68 0%,#8fa79a 30%,#d1a35e 62%,#b5473a 100%)}
 .rends{display:flex;justify-content:space-between;gap:16px;margin-top:12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rsurvey{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:24px 48px;margin-top:48px;padding:32px;background:var(--paper);border-left:3px solid var(--navy)}
+.rsurvey > div{max-width:640px}
+.rsurvey h3{font-size:28px;line-height:1.2;margin-top:8px}
+.rsurvey p{font-size:16px;line-height:1.6;color:var(--body);margin-top:10px}
 .rgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px;margin-top:40px}
 .rcol h3{margin:0;padding-top:14px;border-top:3px solid var(--tc);font-weight:400;font-size:22px;line-height:1.25;color:var(--ink);min-height:3.6em}
 .rcol ul{list-style:none;margin:16px 0 0;padding:0}
@@ -166,7 +170,8 @@ html{scroll-padding-top:12px}
 .email-report .er-trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .email-report .er-status{margin:0;font-size:13px;min-height:1em}
 .email-report .er-status[data-ok="yes"]{color:#2f6b57}.email-report .er-status[data-ok="no"]{color:var(--red)}
-.email-report .er-fine{margin:0;font-size:11px;color:#8a8a8a}
+.email-report .er-fine,.sr-mail .er-fine{margin:0;font-size:11px;color:#8a8a8a}
+.sr-mail .er-fine{margin-top:8px}
 .calc-chart{margin:20px 0 4px}
 .calc-chart .legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--muted);margin-bottom:8px}
 .calc-chart .li{display:inline-flex;align-items:center;gap:6px}
@@ -440,7 +445,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
             <label class="er-trap" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
             <label class="er-opt"><input type="checkbox" name="optin"> Also send me occasional insights on fees and investing. Unsubscribe anytime.</label>
             <p class="er-status" data-calc-email-status aria-live="polite"></p>
-            <p class="er-fine">We send this one report and never share your email.</p>
+            <p class="er-fine">We send this one report and never share your email. See our <a href="/privacy/">Privacy Policy</a>.</p>
           </form>
         </div>
       </div>
@@ -534,6 +539,14 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
     </div>
     <p class="fine rnote">Independent, peer-reviewed and working-paper research only. Studies funded by firms that sell advice or investment products are excluded. Links open the publisher's listing or a free version of the paper.</p>
     <p class="serif rclose">Your own accounts are the only way to know where your advice falls on this scale. That is what a review measures.</p>
+    <div class="rsurvey">
+      <div>
+        <span class="eyebrow">Ongoing research</span>
+        <h3 class="serif">Help shape what we learn next.</h3>
+        <p>We keep studying how wealth management works for families. It keeps our reviews current and our data up to date. Add your experience in a short survey. It's anonymous and takes about three minutes.</p>
+      </div>
+      <a class="btn btn-navy" href="https://tally.so/r/jePB0a" target="_blank" rel="noopener" data-survey>Take the survey</a>
+    </div>
   </section>
 
   <section id="how" class="band">
@@ -570,6 +583,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
             </div>
             <label class="er-trap" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
             <p class="er-status" data-status aria-live="polite"></p>
+            <p class="er-fine">We send this one report and never share your email. See our <a href="/privacy/">Privacy Policy</a>.</p>
           </form>
         </details>
         <p class="fine">Illustrative example using hypothetical data.</p>
@@ -660,7 +674,7 @@ html[data-country="us"] [data-show="ca"],html[data-country="ca"] [data-show="us"
   </div>
   <div class="legal">
     <div class="wrap">
-      <span>© 2026 Prof of Wall Street</span>
+      <span>© 2026 Cognizantly, Inc. · Prof of Wall Street · <a href="/privacy/" style="color:inherit">Privacy</a> · <a href="/terms/" style="color:inherit">Terms</a></span>
       <span>For education only. Not investment advice. I do not sell securities or manage money.</span>
     </div>
   </div>

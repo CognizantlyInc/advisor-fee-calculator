@@ -13,6 +13,7 @@
  *   sample_report_download click on the sample report PDF
  *   sample_report_emailed  "Email me a copy" sent successfully
  *   book_call_click        click on any Calendly link
+ *   survey_click           click on the research survey (Tally)
  */
 (function () {
   'use strict';
@@ -102,6 +103,7 @@
       if (!a) return;
       var href = a.getAttribute('href') || '';
       if (/sample-report\.pdf$/.test(href)) track('sample_report_download', { link_text: (a.textContent || '').trim().slice(0, 60) || 'cover image' });
+      else if (/tally\.so/.test(href)) track('survey_click', { page_location: location.pathname });
       else if (/calendly\.com/.test(href)) track('book_call_click', { page_location: location.pathname, link_text: (a.textContent || '').trim().slice(0, 60) });
     });
   });
